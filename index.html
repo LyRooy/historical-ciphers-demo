@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Klasyczne Szyfry - Aplikacja Edukacyjna</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Nawigacja-->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <span class="logo-text">Klasyczne Szyfry</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link active">Start</a></li>
+                <li><a href="#app" class="nav-link">Aplikacja</a></li>
+                <li><a href="#tutorial" class="nav-link">Tutorial</a></li>
+                <li><a href="#quiz" class="nav-link">Quiz</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Sekcja informacyjna -->
+    <section id="home" class="hero">
+        <div class="hero-background">
+            <div class="animated-grid"></div>
+        </div>
+        <div class="container hero-content">
+            <div class="hero-text">
+                <h1 class="hero-title">
+                    Odkryj świat <span class="gradient-text">klasycznych szyfrów</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Interaktywna podróż przez historię kryptografii - od szyfru Cezara po Enigmę
+                </p>
+                <div class="hero-buttons">
+                    <a href="#app" class="btn btn-primary">Rozpocznij naukę</a>
+                    <a href="#tutorial" class="btn btn-secondary">Zobacz tutorial</a>
+                </div>
+            </div>
+            <div class="hero-visual">
+                <div class="cipher-wheel-container">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!--Sekcja główna  -->
+    <section id="app" class="app-section">
+        <div class="container-fluid">
+            
+            <!-- Wybór szyfrów -->
+            <aside class="cipher-sidebar">
+                <h2 class="sidebar-title">Wybierz szyfr</h2>
+                
+                <div class="cipher-list">
+                    <!-- Cezar -->
+                    <div class="cipher-item" data-cipher="caesar">
+                        <div class="cipher-item-icon">
+                        </div>
+                        <div class="cipher-item-info">
+                            <h3>Szyfr Cezara</h3>
+                            <p>Podstawienie z przesunięciem</p>
+                            <span class="difficulty easy">Łatwy</span>
+                        </div>
+                    </div>
+
+                    <!-- Vigenère -->
+                    <div class="cipher-item" data-cipher="vigenere">
+                        <div class="cipher-item-icon">
+                        </div>
+                        <div class="cipher-item-info">
+                            <h3>Vigenère</h3>
+                            <p>Polialfabetyczny klucz</p>
+                            <span class="difficulty medium">Średni</span>
+                        </div>
+                    </div>
+
+                    <!-- Płotowy -->
+                    <div class="cipher-item" data-cipher="railfence">
+                        <div class="cipher-item-icon">
+                        </div>
+                        <div class="cipher-item-info">
+                            <h3>Szyfr Płotowy</h3>
+                            <p>Transpozycja zygzakiem</p>
+                            <span class="difficulty easy">Łatwy</span>
+                        </div>
+                    </div>
+
+                    <!-- Enigma -->
+                    <div class="cipher-item" data-cipher="enigma">
+                        <div class="cipher-item-icon">
+                        </div>
+                        <div class="cipher-item-info">
+                            <h3>Enigma</h3>
+                            <p>Maszyna z rotorami</p>
+                            <span class="difficulty hard">Trudny</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!--Info-->
+                <div class="cipher-info-box">
+                    <h4>Informacja</h4>
+                    <p id="cipher-description">Wybierz szyfr z listy powyżej, aby rozpocząć</p>
+                </div>
+            </aside>
+
+            <!-- Sekcja szyfrowania -->
+            <main class="main-workspace">
+
+                <div class="workspace-topbar">
+                    <div class="topbar-left">
+                        <h2 class="current-cipher-name">Wybierz szyfr</h2>
+                    </div>
+                    <div class="topbar-right">
+                        <button class="btn-icon" id="reset-btn" title="Resetuj wszystko">
+                        </button>
+                    </div>
+                </div>
+
+                <div class="workspace-container">
+                    
+                    <div class="workspace-column">
+                        
+                        <div class="workspace-card">
+                            <div class="card-header">
+                                <h3>Tekst wejściowy</h3>
+                                <span class="char-count">0 znaków</span>
+                            </div>
+                            <textarea 
+                                class="cipher-input" 
+                                placeholder="Wprowadź tekst do zaszyfrowania..."
+                                rows="8"
+                            ></textarea>
+                        </div>
+
+                        <div class="workspace-card">
+                            <div class="card-header">
+                                <h3>Parametry</h3>
+                            </div>
+                            <div class="settings-container">
+                                <div class="settings-group">
+                                    <p class="settings-placeholder">Wybierz szyfr, aby zobaczyć parametry</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="action-buttons-container">
+                            <button class="btn btn-primary btn-lg" id="encrypt-btn">
+                                Zaszyfruj
+                            </button>
+                            <button class="btn btn-secondary btn-lg" id="decrypt-btn">
+                                Odszyfruj
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="workspace-column">
+                        
+                        <!--Wizualizacja-->
+                        <div class="workspace-card viz-card">
+                            <div class="card-header">
+                                <h3>Wizualizacja krok po kroku</h3>
+                                <div class="viz-controls">
+                                    <button class="btn-icon btn-icon-sm" title="Poprzedni krok" id="prev-step">
+                                    </button>
+                                    <button class="btn-icon btn-icon-sm" title="Odtwórz" id="play-viz">
+                                    </button>
+                                    <button class="btn-icon btn-icon-sm" title="Następny krok" id="next-step">
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Wynik -->
+                        <div class="workspace-card">
+                            <div class="card-header">
+                                <h3>Wynik</h3>
+                                <button class="btn-icon btn-icon-sm" title="Kopiuj" id="copy-btn">
+                                </button>
+                            </div>
+                            <div class="output-area">
+                                <code class="output-text">Wynik pojawi się tutaj...</code>
+                            </div>
+                            
+                            <!-- Eksport -->
+                            <div class="export-buttons">
+                                <button class="btn btn-outline btn-sm" id="export-txt">
+                                    Eksport TXT
+                                </button>
+                                <button class="btn btn-outline btn-sm" id="export-pdf">
+                                    Eksport PDF
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </section>
+
+    <!-- Sekcja ostrzeżenia -->
+    <div class="warning-banner">
+        <div class="container">
+            <p>
+                <strong>Uwaga edukacyjna:</strong> Ta aplikacja służy wyłącznie celom edukacyjnym. 
+                Przedstawione szyfry są historycznie niewystarczające do ochrony współczesnych danych.
+            </p>
+        </div>
+    </div>
+
+    <!-- Stopka -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Klasyczne szyfry</h4>
+                    <p>Interaktywna platforma edukacyjna do nauki klasycznych metod kryptografii.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Zasoby</h4>
+                    <ul>
+                        <li><a href="#">Dokumentacja</a></li>
+                        <li><a href="#">GitHub Repository</a></li>
+                        <li><a href="#">Tutorial PDF</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025. Projekt edukacyjny.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
