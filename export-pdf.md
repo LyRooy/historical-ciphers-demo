@@ -1,4 +1,4 @@
-# 🧾 Instrukcja: Eksport do pliku PDF w aplikacji webowej
+#  Instrukcja: Eksport do pliku PDF w aplikacji webowej
 
 ##  Cel
 Umożliwienie użytkownikowi zapisywania wyników szyfrowania, wizualizacji lub quizu w formacie PDF bez potrzeby użycia backendu. Funkcjonalność realizowana po stronie przeglądarki przy użyciu biblioteki **jsPDF** lub **html2pdf.js**.
