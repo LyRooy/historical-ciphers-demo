@@ -4,15 +4,16 @@
 - Otwórz stronę aplikacji (np. przez GitHub Pages lub `index.html` lokalnie).
 
 ## 2. Wprowadzanie danych
-- Wpisz tekst jawny.
+- Kliknij przycisk "rozpocznij naukę"
 - Wybierz szyfr i wprowadź wymagane parametry (np. przesunięcie lub klucz).
+- Wpisz tekst jawny.
 - Kliknij **Szyfruj** lub **Deszyfruj**.
 
 ## 3. Wizualizacja
-- Obserwuj animację krok po kroku (np. ruch rotorów Enigmy, tabele podstawień).
+- Obserwuj animację krok po kroku.
 
 ## 4. Eksport wyników
-- Możesz pobrać wynik jako PDF, PNG lub CSV.
+- Możesz pobrać wynik jako PDF lub TXT .
 
 ## 5. Tryb quizów
 - Wybierz „Quizy” z menu.
