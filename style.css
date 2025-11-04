@@ -148,6 +148,31 @@ body {
     color: #666;
 }
 
+ /* Ikona kopiowania */
+#copy-btn::before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3crect x='9' y='9' width='13' height='13' rx='2' ry='2'/%3e%3cpath d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'/%3e%3c/svg%3e");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* Ikona resetu  */
+#reset-btn::before {
+    content: "";
+    display: block;
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='1 4 1 10 7 10'/%3e%3cpath d='M3.51 15a9 9 0 1 0 2.13-9.36L1 10'/%3e%3c/svg%3e");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+
 .difficulty {
     display: inline-block;
     padding: 0.2rem 0.5rem;
