@@ -1,0 +1,12 @@
+## 1. Szyfr Cezara
+Zaszyfruj tekst „ALA MA KOTA” z przesunięciem +3.
+
+## 2. Szyfr Vigenère’a
+Zaszyfruj „TAJNE DANE” kluczem „KLUCZ”.
+Odszyfruj i sprawdź poprawność.
+
+## 3. Szyfr płotowy
+Zaszyfruj tekst przy `rails=3` i odtwórz rozmieszczenie liter.
+
+## 4. Enigma (prosty model)
+Ustaw 2 rotory, wpisz tekst i prześledź ruch rotorów.
