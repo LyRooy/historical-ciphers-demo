@@ -16,9 +16,9 @@ D) Wymaga dużej mocy obliczeniowej
 ✅ Poprawna odpowiedź: A
 
 3. W szyfrze Cezara zastosowano przesunięcie o +3. Jak zaszyfruje się litera „A”?
-A) D
+A) C
 B) B
-C) C
+C) D
 D) Z
 ✅ Poprawna odpowiedź: C
 
