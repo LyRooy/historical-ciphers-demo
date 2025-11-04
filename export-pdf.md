@@ -1,47 +1,51 @@
-#  Instrukcja: Eksport do pliku PDF w aplikacji webowej
+Instrukcja: Eksport do pliku PDF w aplikacji webowej
+🎯 Cel
 
-##  Cel
-Umożliwienie użytkownikowi zapisywania wyników szyfrowania, wizualizacji lub quizu w formacie PDF bez potrzeby użycia backendu. Funkcjonalność realizowana po stronie przeglądarki przy użyciu biblioteki **jsPDF** lub **html2pdf.js**.
+Umożliwienie użytkownikowi zapisywania wyników szyfrowania, wizualizacji lub quizu w formacie PDF, bez potrzeby użycia backendu.
+Funkcjonalność realizowana po stronie przeglądarki przy użyciu bibliotek:
+jsPDF lub html2pdf.js.
 
----
+⚙️ Krok 1 — Instalacja biblioteki
 
-##  Krok 1 — Instalacja biblioteki
+W terminalu projektu uruchom:
 
-```bash
 npm install jspdf
-```
-lub:
-```bash
+
+
+lub — jeśli chcesz eksportować całe sekcje HTML (ze stylami CSS):
+
 npm install html2pdf.js
-```
 
----
-
-##  Krok 2 — Eksport prostego raportu (tekstowego)
-
-###  Przykład (JavaScript / React)
-```js
+🧩 Krok 2 — Eksport prostego raportu (tekstowego)
+📄 Przykład (JavaScript / React)
 import jsPDF from "jspdf";
 
 export function exportToPDF() {
   const doc = new jsPDF();
+
+  // Nagłówek dokumentu
   doc.setFontSize(18);
   doc.text("Raport szyfrowania", 20, 20);
+
+  // Treść
   doc.setFontSize(12);
   doc.text("Szyfr: Cezara (+3)", 20, 40);
   doc.text("Tekst jawny: ALA MA KOTA", 20, 50);
   doc.text("Szyfrogram: DOD PD NRWD", 20, 60);
   doc.text("Autor: Jan Kowalski", 20, 80);
+
+  // Zapis pliku
   doc.save("raport_szyfrowania.pdf");
 }
-```
 
----
 
-##  Krok 3 — Eksport fragmentu strony (HTML + CSS)
+📁 Wynik: w przeglądarce automatycznie pobierze się plik raport_szyfrowania.pdf.
 
-###  Przykład z użyciem `html2pdf.js`
-```js
+🖼️ Krok 3 — Eksport fragmentu strony (HTML + CSS)
+
+Jeśli chcesz zapisać widok aplikacji (np. quiz, wizualizację, raport) jako PDF — użyj html2pdf.js.
+
+📄 Przykład:
 import html2pdf from "html2pdf.js";
 
 export function exportSectionToPDF() {
@@ -55,10 +59,8 @@ export function exportSectionToPDF() {
   };
   html2pdf().set(options).from(element).save();
 }
-```
 
-HTML przykład:
-```html
+🧱 HTML przykład:
 <div id="export-section">
   <h2>Wynik quizu</h2>
   <p>Użytkownik: Anna Nowak</p>
@@ -66,35 +68,33 @@ HTML przykład:
 </div>
 
 <button onclick="exportSectionToPDF()">Pobierz PDF</button>
-```
 
----
+🧠 Krok 4 — Dobre praktyki
 
-##  Krok 4 — Dobre praktyki
-- Dodaj tytuł i metadane PDF:
-```js
+✅ Dodaj tytuł i metadane PDF-a:
+
 doc.setProperties({
   title: "Raport szyfrowania",
   subject: "Wyniki użytkownika",
   author: "Aplikacja Szyfry Web",
   keywords: "szyfrowanie, edukacja, kryptografia",
 });
-```
-- Zachowaj czytelność (krótkie linie, marginesy).
-- Przetestuj polskie znaki (UTF-8).
 
----
 
-##  Krok 5 — Alternatywy
+✅ Zachowaj czytelność PDF-a:
 
-| Biblioteka | Zastosowanie | Zalety | Wady |
-|-------------|---------------|--------|------|
-| **jsPDF** | Teksty i proste raporty | Lekka, łatwa w obsłudze | Małe możliwości stylowania |
-| **html2pdf.js** | Eksport wyglądu strony (HTML + CSS) | Zachowuje styl | Wolniejsza przy dużych stronach |
-| **pdfmake** | Raporty edukacyjne, quizy | Obsługuje tabele i UTF-8 | Wymaga konfiguracji layoutu |
+krótkie linie tekstu,
 
----
+odpowiednie marginesy,
 
-##  Podsumowanie
+testowanie polskich znaków (UTF-8).
 
-> **Rekomendacja:** do projektu edukacyjnego szyfrów zastosuj **html2pdf.js** — pozwala eksportować wizualizacje, raporty i quizy w formie zgodnej z widokiem aplikacji.
+🧰 Krok 5 — Alternatywy
+Biblioteka	Zastosowanie	Zalety	Wady
+jsPDF	Teksty i proste raporty	Lekka, łatwa w obsłudze	Małe możliwości stylowania
+html2pdf.js	Eksport wyglądu strony (HTML + CSS)	Zachowuje styl	Wolniejsza przy dużych stronach
+pdfmake	Raporty edukacyjne, quizy	Obsługuje tabele i polskie znaki	Wymaga konfiguracji layoutu
+✅ Podsumowanie
+
+💡 Rekomendacja:
+Do projektu edukacyjnego szyfrów zastosuj html2pdf.js – pozwala eksportować wizualizacje, raporty i quizy w formie zgodnej z widokiem aplikacji.
