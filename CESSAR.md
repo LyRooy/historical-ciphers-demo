@@ -17,7 +17,7 @@ Szyfr Cezara można wykorzystać do:
 
 Zasady użytkowania:
 1. Wprowadź tekst, który chcesz zaszyfrować lub odszyfrować.
-2. Wybierz wartość klucza (np. 1–25 dla alfabetu łacińskiego).
+2. Wybierz wartość klucza (np. 1–25 dla alfabetu łacińskiego lub 1-35 dla alfabetu polskiego).
 3. Ustal, czy mają być zachowane duże litery i znaki interpunkcyjne.
 4. Uruchom proces szyfrowania lub odszyfrowania.
 
