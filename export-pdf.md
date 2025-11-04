@@ -1,11 +1,11 @@
 # 🧾 Instrukcja: Eksport do pliku PDF w aplikacji webowej
 
-## 🎯 Cel
+##  Cel
 Umożliwienie użytkownikowi zapisywania wyników szyfrowania, wizualizacji lub quizu w formacie PDF bez potrzeby użycia backendu. Funkcjonalność realizowana po stronie przeglądarki przy użyciu biblioteki **jsPDF** lub **html2pdf.js**.
 
 ---
 
-## ⚙️ Krok 1 — Instalacja biblioteki
+##  Krok 1 — Instalacja biblioteki
 
 ```bash
 npm install jspdf
@@ -17,9 +17,9 @@ npm install html2pdf.js
 
 ---
 
-## 🧩 Krok 2 — Eksport prostego raportu (tekstowego)
+##  Krok 2 — Eksport prostego raportu (tekstowego)
 
-### 📄 Przykład (JavaScript / React)
+###  Przykład (JavaScript / React)
 ```js
 import jsPDF from "jspdf";
 
@@ -38,9 +38,9 @@ export function exportToPDF() {
 
 ---
 
-## 🖼️ Krok 3 — Eksport fragmentu strony (HTML + CSS)
+##  Krok 3 — Eksport fragmentu strony (HTML + CSS)
 
-### 📄 Przykład z użyciem `html2pdf.js`
+###  Przykład z użyciem `html2pdf.js`
 ```js
 import html2pdf from "html2pdf.js";
 
@@ -70,7 +70,7 @@ HTML przykład:
 
 ---
 
-## 🧠 Krok 4 — Dobre praktyki
+##  Krok 4 — Dobre praktyki
 - Dodaj tytuł i metadane PDF:
 ```js
 doc.setProperties({
@@ -85,7 +85,7 @@ doc.setProperties({
 
 ---
 
-## 🧰 Krok 5 — Alternatywy
+##  Krok 5 — Alternatywy
 
 | Biblioteka | Zastosowanie | Zalety | Wady |
 |-------------|---------------|--------|------|
@@ -95,6 +95,6 @@ doc.setProperties({
 
 ---
 
-## ✅ Podsumowanie
+##  Podsumowanie
 
 > **Rekomendacja:** do projektu edukacyjnego szyfrów zastosuj **html2pdf.js** — pozwala eksportować wizualizacje, raporty i quizy w formie zgodnej z widokiem aplikacji.
