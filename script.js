@@ -21,6 +21,352 @@ document.addEventListener('DOMContentLoaded', () => {
     // === STAN ===
     let currentCipher = null;
     let shiftValue = 3;
+    
+    // === STAN SPA I WIZUALIZACJI ===
+    let spaState = {
+        currentSection: 'home',
+        visualizationSteps: [],
+        currentStep: 0,
+        isPlaying: false
+    };
+
+    // =====================================================
+    // TYDZIEŃ 2: STRUKTURA SPA
+    // =====================================================
+    
+    function initializeSPA() {
+        // Routing oparty na hash
+        window.addEventListener('hashchange', handleSPARouting);
+        
+        // Ulepszona nawigacja
+        enhanceNavigation();
+        
+        // Początkowa trasa
+        handleSPARouting();
+        
+        console.log('🚀 SPA zainicjalizowane');
+    }
+    
+    function handleSPARouting() {
+        const hash = window.location.hash.slice(1) || 'home';
+        navigateToSection(hash);
+    }
+    
+    function navigateToSection(sectionId) {
+        // Aktualizuj aktywną nawigację
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.classList.remove('active');
+            if (link.getAttribute('href') === `#${sectionId}`) {
+                link.classList.add('active');
+            }
+        });
+        
+        // Płynne przewijanie do sekcji
+        const targetSection = document.getElementById(sectionId);
+        if (targetSection) {
+            targetSection.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+        
+        spaState.currentSection = sectionId;
+        
+        // Inicjalizuj wizualizację po przejściu do sekcji aplikacji
+        if (sectionId === 'app') {
+            setTimeout(initializeVisualization, 300);
+        }
+    }
+    
+    function enhanceNavigation() {
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').slice(1);
+                window.location.hash = targetId;
+            });
+        });
+        
+        // Przyciski hero dla nawigacji SPA
+        document.querySelectorAll('.hero-buttons .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = btn.getAttribute('href').slice(1);
+                window.location.hash = targetId;
+            });
+        });
+    }
+
+    // =====================================================
+    // TYDZIEŃ 3: WIZUALIZACJA CEZARA
+    // =====================================================
+    
+    function initializeVisualization() {
+        createVisualizationInterface();
+        bindVisualizationControls();
+        console.log('🎨 Wizualizacja Cezara zainicjalizowana');
+    }
+    
+    function createVisualizationInterface() {
+        const vizCard = document.querySelector('.viz-card');
+        if (!vizCard) return;
+        
+        // Sprawdź czy wizualizacja już została zainicjalizowana
+        if (vizCard.querySelector('.visualization-content')) {
+            console.log('🎨 Wizualizacja już istnieje, pomijam inicjalizację');
+            return;
+        }
+        
+        // Dodaj zawartość wizualizacji
+        const existingHeader = vizCard.querySelector('.card-header').outerHTML;
+        vizCard.innerHTML = existingHeader + `
+            <div class="visualization-content">
+                <div class="viz-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="step-counter">
+                        Krok <span class="current-step">0</span> z <span class="total-steps">0</span>
+                    </div>
+                </div>
+                
+                <div class="visualization-area">
+                    <div class="viz-placeholder">
+                        <div class="placeholder-icon">🔍</div>
+                        <p>Wybierz szyfr Cezara i zaszyfruj tekst aby zobaczyć wizualizację</p>
+                    </div>
+                </div>
+                
+                <div class="alphabet-reference">
+                    <h4>Polski alfabet (35 liter):</h4>
+                    <div class="alphabet-display">
+                        ${generateAlphabetDisplay()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateAlphabetDisplay() {
+        return POLISH_UPPER.split('').map((letter, index) => 
+            `<span class="alphabet-letter" data-index="${index}">${letter}</span>`
+        ).join('');
+    }
+    
+    function bindVisualizationControls() {
+        // Ulepszone istniejące przyciski
+        const prevBtn = document.getElementById('prev-step');
+        const playBtn = document.getElementById('play-viz');
+        const nextBtn = document.getElementById('next-step');
+        
+        if (prevBtn) {
+            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
+            prevBtn.onclick = () => previousVisualizationStep();
+        }
+        
+        if (playBtn) {
+            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
+            playBtn.onclick = () => toggleVisualizationPlayback();
+        }
+        
+        if (nextBtn) {
+            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
+            nextBtn.onclick = () => nextVisualizationStep();
+        }
+    }
+    
+    function generateVisualizationSteps(text, shift) {
+        spaState.visualizationSteps = [];
+        let stepNumber = 1;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            let lowerIdx = POLISH_LOWER.indexOf(char);
+            let upperIdx = POLISH_UPPER.indexOf(char);
+            
+            if (lowerIdx !== -1 || upperIdx !== -1) {
+                const isUpper = upperIdx !== -1;
+                const idx = isUpper ? upperIdx : lowerIdx;
+                const currentAlphabet = isUpper ? POLISH_UPPER : POLISH_LOWER;
+                const newIdx = (idx + shift) % ALPHABET_SIZE;
+                const transformedChar = currentAlphabet[newIdx];
+                
+                spaState.visualizationSteps.push({
+                    stepNumber,
+                    position: i,
+                    original: char,
+                    transformed: transformedChar,
+                    shift,
+                    originalIndex: idx,
+                    newIndex: newIdx,
+                    isUpperCase: isUpper,
+                    description: `'${char}' (poz. ${idx}) + ${shift} = '${transformedChar}' (poz. ${newIdx})`
+                });
+                stepNumber++;
+            }
+        }
+        
+        spaState.currentStep = 0;
+        updateVisualizationDisplay();
+    }
+    
+    function updateVisualizationDisplay() {
+        if (spaState.visualizationSteps.length === 0) {
+            clearVisualization();
+            return;
+        }
+        
+        const step = spaState.visualizationSteps[spaState.currentStep];
+        renderVisualizationStep(step);
+        updateProgressIndicators();
+    }
+    
+    function renderVisualizationStep(step) {
+        const vizArea = document.querySelector('.visualization-area');
+        if (!vizArea) return;
+        
+        vizArea.innerHTML = `
+            <div class="viz-step-content">
+                <div class="step-header">
+                    <h4>Krok ${step.stepNumber}: ${step.description}</h4>
+                </div>
+                
+                <div class="char-transformation">
+                    <div class="char-box original">
+                        <div class="char-label">Oryginalny</div>
+                        <div class="char-display">${step.original}</div>
+                        <div class="char-position">Pozycja: ${step.originalIndex}</div>
+                    </div>
+                    
+                    <div class="transform-arrow">
+                        <div class="shift-info">+${step.shift}</div>
+                        <div class="arrow">→</div>
+                    </div>
+                    
+                    <div class="char-box transformed">
+                        <div class="char-label">Zaszyfrowany</div>
+                        <div class="char-display">${step.transformed}</div>
+                        <div class="char-position">Pozycja: ${step.newIndex}</div>
+                    </div>
+                </div>
+                
+                <div class="alphabet-highlight">
+                    <div class="alphabet-row">
+                        <span class="alphabet-label">${step.isUpperCase ? 'Wielkie' : 'Małe'} litery:</span>
+                        <div class="alphabet-letters">
+                            ${renderAlphabetWithHighlights(step)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderAlphabetWithHighlights(step) {
+        const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
+        return alphabet.split('').map((letter, index) => {
+            let className = 'alphabet-letter';
+            if (index === step.originalIndex) className += ' original-highlight';
+            if (index === step.newIndex) className += ' transformed-highlight';
+            return `<span class="${className}">${letter}</span>`;
+        }).join('');
+    }
+    
+    function updateProgressIndicators() {
+        const currentStepEl = document.querySelector('.current-step');
+        const totalStepsEl = document.querySelector('.total-steps');
+        const progressFill = document.querySelector('.progress-fill');
+        
+        if (currentStepEl) currentStepEl.textContent = spaState.currentStep + 1;
+        if (totalStepsEl) totalStepsEl.textContent = spaState.visualizationSteps.length;
+        
+        if (progressFill && spaState.visualizationSteps.length > 0) {
+            const progress = ((spaState.currentStep + 1) / spaState.visualizationSteps.length) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+    }
+    
+    function previousVisualizationStep() {
+        if (spaState.currentStep > 0) {
+            spaState.currentStep--;
+            updateVisualizationDisplay();
+        }
+    }
+    
+    function nextVisualizationStep() {
+        if (spaState.currentStep < spaState.visualizationSteps.length - 1) {
+            spaState.currentStep++;
+            updateVisualizationDisplay();
+        }
+    }
+    
+    function toggleVisualizationPlayback() {
+        const playBtn = document.getElementById('play-viz');
+        
+        if (spaState.isPlaying) {
+            stopVisualizationPlayback();
+            playBtn.innerHTML = '▶️';
+        } else {
+            startVisualizationPlayback();
+            playBtn.innerHTML = '⏸️';
+        }
+    }
+    
+    function startVisualizationPlayback() {
+        if (spaState.visualizationSteps.length === 0) return;
+        
+        spaState.isPlaying = true;
+        spaState.currentStep = 0;
+        
+        spaState.playInterval = setInterval(() => {
+            updateVisualizationDisplay();
+            
+            if (spaState.currentStep < spaState.visualizationSteps.length - 1) {
+                spaState.currentStep++;
+            } else {
+                stopVisualizationPlayback();
+                document.getElementById('play-viz').innerHTML = '▶️';
+                showNotification('Wizualizacja zakończona!', 'success');
+            }
+        }, 1500);
+    }
+    
+    function stopVisualizationPlayback() {
+        spaState.isPlaying = false;
+        if (spaState.playInterval) {
+            clearInterval(spaState.playInterval);
+            spaState.playInterval = null;
+        }
+    }
+    
+    function clearVisualization() {
+        const vizArea = document.querySelector('.visualization-area');
+        if (vizArea) {
+            vizArea.innerHTML = `
+                <div class="viz-placeholder">
+                    <div class="placeholder-icon">🔍</div>
+                    <p>Wybierz szyfr Cezara i zaszyfruj tekst aby zobaczyć wizualizację</p>
+                </div>
+            `;
+        }
+        
+        document.querySelector('.current-step').textContent = '0';
+        document.querySelector('.total-steps').textContent = '0';
+        document.querySelector('.progress-fill').style.width = '0%';
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `spa-notification ${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
 
 // ===== SZYFRY ==== //
 
@@ -103,6 +449,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     shiftValue = parseInt(slider.value);
                     shiftDisplay.textContent = shiftValue;
                 });
+                
+                // Inicjalizuj wizualizację po wyborze szyfru Cezara
+                setTimeout(initializeVisualization, 100);
             }
 
             resetAll();
@@ -115,16 +464,23 @@ document.addEventListener('DOMContentLoaded', () => {
     encryptBtn.addEventListener('click', () => {
         if (!currentCipher) {
             outputText.textContent = 'Wybierz szyfr!';
+            showNotification('Wybierz szyfr!', 'warning');
             return;
         }
         const input = inputTextarea.value.trim();
         if (!input) {
             outputText.textContent = 'Wprowadź tekst!';
+            showNotification('Wprowadź tekst!', 'warning');
             return;
         }
 
         if (currentCipher === 'caesar') {
-            outputText.textContent = caesarCipher(input, shiftValue, true);
+            const result = caesarCipher(input, shiftValue, true);
+            outputText.textContent = result;
+            
+            // Generuj wizualizację
+            generateVisualizationSteps(input, shiftValue);
+            showNotification('Tekst zaszyfrowany!', 'success');
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
         }
@@ -134,16 +490,23 @@ document.addEventListener('DOMContentLoaded', () => {
     decryptBtn.addEventListener('click', () => {
         if (!currentCipher) {
             outputText.textContent = 'Wybierz szyfr!';
+            showNotification('Wybierz szyfr!', 'warning');
             return;
         }
         const input = inputTextarea.value.trim();
         if (!input) {
             outputText.textContent = 'Wprowadź tekst!';
+            showNotification('Wprowadź tekst!', 'warning');
             return;
         }
 
         if (currentCipher === 'caesar') {
-            outputText.textContent = caesarCipher(input, shiftValue, false);
+            const result = caesarCipher(input, shiftValue, false);
+            outputText.textContent = result;
+            
+            // Generuj wizualizację dla deszyfrowania
+            generateVisualizationSteps(input, ALPHABET_SIZE - shiftValue);
+            showNotification('Tekst odszyfrowany!', 'success');
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
         }
@@ -167,4 +530,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // === INPUT EVENTS ===
     inputTextarea.addEventListener('input', updateCharCount);
     updateCharCount();
+    
+    // === INICJALIZACJA ===
+    initializeSPA();
+    
+    console.log('✨ SPA + Wizualizacja Cezara załadowana!');
 });
