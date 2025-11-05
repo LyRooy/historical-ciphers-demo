@@ -160,6 +160,16 @@ body {
     background-position: center;
 }
 
+#copy-btn {
+    transition: all 0.2s ease;
+}
+
+#copy-btn:hover {
+    background-color: #6c757d;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
 /* Ikona resetu  */
 #reset-btn::before {
     content: "";
@@ -170,6 +180,16 @@ body {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+#reset-btn {
+    transition: all 0.2s ease;
+}
+
+#reset-btn:hover {
+    background-color: #6c757d;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 
@@ -546,6 +566,11 @@ html {
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
+    display: none; /* Ukryj domyślnie */
+}
+
+.alphabet-reference.show {
+    display: block; /* Pokaż po wybraniu szyfru Cezara */
 }
 
 .alphabet-reference h4 {

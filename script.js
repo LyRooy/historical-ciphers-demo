@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === PEŁNY POLSKI ALFABET (35 liter) ===
     const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż';
-    const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWXYŹŻ';
+    const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWXYZŹŻ';
     const ALPHABET_SIZE = 35;
 
     // === STAN ===
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function generateVisualizationSteps(text, shift) {
+    function generateVisualizationSteps(text, shift, isEncryption = true) {
         spaState.visualizationSteps = [];
         let stepNumber = 1;
         
@@ -188,8 +188,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isUpper = upperIdx !== -1;
                 const idx = isUpper ? upperIdx : lowerIdx;
                 const currentAlphabet = isUpper ? POLISH_UPPER : POLISH_LOWER;
-                const newIdx = (idx + shift) % ALPHABET_SIZE;
+                // Obsługa ujemnych przesunięć (modulo dla liczb ujemnych w JS)
+                const newIdx = ((idx + shift) % ALPHABET_SIZE + ALPHABET_SIZE) % ALPHABET_SIZE;
                 const transformedChar = currentAlphabet[newIdx];
+                
+                // Formatowanie przesunięcia dla opisu
+                const shiftDisplay = shift >= 0 ? `+${shift}` : `${shift}`;
                 
                 spaState.visualizationSteps.push({
                     stepNumber,
@@ -200,7 +204,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     originalIndex: idx,
                     newIndex: newIdx,
                     isUpperCase: isUpper,
-                    description: `'${char}' (poz. ${idx}) + ${shift} = '${transformedChar}' (poz. ${newIdx})`
+                    isEncryption: isEncryption,
+                    description: `'${char}' (poz. ${idx}) ${shiftDisplay} = '${transformedChar}' (poz. ${newIdx})`
                 });
                 stepNumber++;
             }
@@ -225,6 +230,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const vizArea = document.querySelector('.visualization-area');
         if (!vizArea) return;
         
+        // Formatowanie przesunięcia dla wyświetlenia
+        const shiftDisplay = step.shift >= 0 ? `+${step.shift}` : `${step.shift}`;
+        
+        // Dynamiczne etykiety w zależności od operacji
+        const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
+        const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
+        
         vizArea.innerHTML = `
             <div class="viz-step-content">
                 <div class="step-header">
@@ -233,18 +245,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 <div class="char-transformation">
                     <div class="char-box original">
-                        <div class="char-label">Oryginalny</div>
+                        <div class="char-label">${originalLabel}</div>
                         <div class="char-display">${step.original}</div>
                         <div class="char-position">Pozycja: ${step.originalIndex}</div>
                     </div>
                     
                     <div class="transform-arrow">
-                        <div class="shift-info">+${step.shift}</div>
+                        <div class="shift-info">${shiftDisplay}</div>
                         <div class="arrow">→</div>
                     </div>
                     
                     <div class="char-box transformed">
-                        <div class="char-label">Zaszyfrowany</div>
+                        <div class="char-label">${transformedLabel}</div>
                         <div class="char-display">${step.transformed}</div>
                         <div class="char-position">Pozycja: ${step.newIndex}</div>
                     </div>
@@ -400,9 +412,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === RESET ===
     function resetAll() {
+        // Zatrzymaj odtwarzanie wizualizacji
+        stopVisualizationPlayback();
+        const playBtn = document.getElementById('play-viz');
+        if (playBtn) {
+            playBtn.innerHTML = '▶️';
+        }
+        
+        // Wyczyść pola
         inputTextarea.value = '';
         outputText.textContent = 'Wynik pojawi się tutaj...';
         updateCharCount();
+        
+        // Resetuj ustawienia szyfru
         if (currentCipher === 'caesar') {
             const slider = document.getElementById('caesar-shift');
             if (slider) {
@@ -411,6 +433,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 shiftValue = 3;
             }
         }
+        
+        clearVisualization();
+        showNotification('Pola zostały wyczyszczone', 'success');
     }
 
     // === WYBÓR SZYFRU ===
@@ -434,6 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
             // Czyszczenie ustawień
             settingsGroup.innerHTML = '<p class="settings-placeholder">Wybierz szyfr, aby zobaczyć parametry</p>';
 
+            // Ukryj alfabet dla wszystkich szyfrów
+            const alphabetRef = document.querySelector('.alphabet-reference');
+            if (alphabetRef) {
+                alphabetRef.classList.remove('show');
+            }
+
             //Zmiany w html dla wyboru szyfru
             // === SZYFR CEZARA ===
             if (currentCipher === 'caesar') {
@@ -449,6 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     shiftValue = parseInt(slider.value);
                     shiftDisplay.textContent = shiftValue;
                 });
+                
+                // Pokaż alfabet dla szyfru Cezara
+                if (alphabetRef) {
+                    alphabetRef.classList.add('show');
+                }
                 
                 // Inicjalizuj wizualizację po wyborze szyfru Cezara
                 setTimeout(initializeVisualization, 100);
@@ -478,8 +514,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = caesarCipher(input, shiftValue, true);
             outputText.textContent = result;
             
-            // Generuj wizualizację
-            generateVisualizationSteps(input, shiftValue);
+            // Generuj wizualizację dla szyfrowania
+            generateVisualizationSteps(input, shiftValue, true);
             showNotification('Tekst zaszyfrowany!', 'success');
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
@@ -504,8 +540,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = caesarCipher(input, shiftValue, false);
             outputText.textContent = result;
             
-            // Generuj wizualizację dla deszyfrowania
-            generateVisualizationSteps(input, ALPHABET_SIZE - shiftValue);
+            // Generuj wizualizację dla deszyfrowania (z ujemnym przesunięciem)
+            generateVisualizationSteps(input, -shiftValue, false);
             showNotification('Tekst odszyfrowany!', 'success');
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
@@ -519,8 +555,13 @@ document.addEventListener('DOMContentLoaded', () => {
             navigator.clipboard.writeText(text).then(() => {
                 const originalTitle = copyBtn.getAttribute('title');
                 copyBtn.setAttribute('title', 'Skopiowano!');
+                showNotification('Tekst skopiowany do schowka!', 'success');
                 setTimeout(() => copyBtn.setAttribute('title', originalTitle), 1000);
+            }).catch(() => {
+                showNotification('Nie udało się skopiować tekstu', 'error');
             });
+        } else {
+            showNotification('Brak tekstu do skopiowania', 'warning');
         }
     });
 
