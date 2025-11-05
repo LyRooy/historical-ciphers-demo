@@ -14,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
 
     // === PEŁNY POLSKI ALFABET (35 liter) ===
-    const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoóprsśtuwyzźż';
-    const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPRSŚTUWYZŹŻ';
-    const ALPHABET_SIZE = 35;
+   const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwyzźż';
+   const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWYŹŻ';
+    const ALPHABET_SIZE = 32;
 
     // === STAN ===
     let currentCipher = null;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="alphabet-reference">
-                    <h4>Polski alfabet (35 liter):</h4>
+                    <h4>Polski alfabet (32 litery):</h4>
                     <div class="alphabet-display">
                         ${generateAlphabetDisplay()}
                     </div>
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== SZYFRY ==== //
 
-    // === FUNKCJA SZYFRU CEZARA (35-literowy alfabet) ===
+    // === FUNKCJA SZYFRU CEZARA (32-literowy alfabet) ===
     function caesarCipher(text, shift, encrypt = true) {
         shift = encrypt ? (shift % ALPHABET_SIZE) : ((ALPHABET_SIZE - (shift % ALPHABET_SIZE)) % ALPHABET_SIZE);
 
