@@ -13,10 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyBtn = document.getElementById('copy-btn');
     const resetBtn = document.getElementById('reset-btn');
 
-    // === PEŁNY POLSKI ALFABET (35 liter) ===
+    // === PEŁNY POLSKI ALFABET (32 litery) ===
     const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwyzźż';
     const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWYŹŻ';
-    const ALPHABET_SIZE = 32;
+    const ALPHABET_SIZE = 33;
 
     // === STAN ===
     let currentCipher = null;
@@ -138,7 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 
                 <div class="alphabet-reference">
-                    <h4>Polski alfabet (32 litery):</h4>
+                    <h4>Polski alfabet (33 litery):</h4>
                     <div class="alphabet-display">
                         ${generateAlphabetDisplay()}
                     </div>
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ===== SZYFRY ==== //
 
-    // === FUNKCJA SZYFRU CEZARA (32-literowy alfabet) ===
+    // === FUNKCJA SZYFRU CEZARA (33-literowy alfabet) ===
     function caesarCipher(text, shift, encrypt = true) {
         shift = encrypt ? (shift % ALPHABET_SIZE) : ((ALPHABET_SIZE - (shift % ALPHABET_SIZE)) % ALPHABET_SIZE);
 
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentCipher === 'caesar') {
                 settingsGroup.innerHTML = `
                     <label for="caesar-shift">Przesunięcie (klucz): <strong id="shift-value">3</strong></label>
-                    <input type="range" id="caesar-shift" min="1" max="31" value="3" class="shift-slider">
+                    <input type="range" id="caesar-shift" min="1" max="32" value="3" class="shift-slider">
                 `;
 
                 const slider = document.getElementById('caesar-shift');
