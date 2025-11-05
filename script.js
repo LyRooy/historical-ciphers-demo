@@ -14,8 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetBtn = document.getElementById('reset-btn');
 
     // === PEŁNY POLSKI ALFABET (35 liter) ===
-   const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwyzźż';
-   const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWYŹŻ';
+    const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwyzźż';
+    const POLISH_UPPER = 'AĄBCĆDEĘFGHIJKLŁMNŃOÓPQRSŚTUVWYŹŻ';
     const ALPHABET_SIZE = 32;
 
     // === STAN ===
@@ -439,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentCipher === 'caesar') {
                 settingsGroup.innerHTML = `
                     <label for="caesar-shift">Przesunięcie (klucz): <strong id="shift-value">3</strong></label>
-                    <input type="range" id="caesar-shift" min="1" max="34" value="3" class="shift-slider">
+                    <input type="range" id="caesar-shift" min="1" max="31" value="3" class="shift-slider">
                 `;
 
                 const slider = document.getElementById('caesar-shift');
