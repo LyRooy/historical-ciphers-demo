@@ -27,7 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSection: 'home',
         visualizationSteps: [],
         currentStep: 0,
-        isPlaying: false
+        isPlaying: false,
+        initialLoad: true  // Flaga dla pierwszego załadowania
     };
 
     // =====================================================
@@ -61,13 +62,21 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
-        // Płynne przewijanie do sekcji
+        // Płynne przewijanie do sekcji (tylko jeśli nie jest to pierwsze załadowanie)
         const targetSection = document.getElementById(sectionId);
-        if (targetSection) {
-            targetSection.scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
+        if (targetSection && !spaState.initialLoad) {
+            // Przewiń z offsetem, aby nie ukrywać nawigacji
+            const navHeight = document.querySelector('.main-nav')?.offsetHeight || 0;
+            const targetPosition = targetSection.offsetTop - navHeight - 20;
+            window.scrollTo({ 
+                top: targetPosition,
+                behavior: 'smooth'
             });
+        }
+        
+        // Wyłącz flagę po pierwszym załadowaniu
+        if (spaState.initialLoad) {
+            spaState.initialLoad = false;
         }
         
         spaState.currentSection = sectionId;
@@ -221,66 +230,119 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
+        const vizArea = document.querySelector('.visualization-area');
+        
         const step = spaState.visualizationSteps[spaState.currentStep];
         renderVisualizationStep(step);
         updateProgressIndicators();
+        
+        // Zawsze resetuj scroll na samą górę
+        if (vizArea) {
+            vizArea.scrollTop = 0;
+        }
     }
     
     function renderVisualizationStep(step) {
         const vizArea = document.querySelector('.visualization-area');
         if (!vizArea) return;
         
-        // Formatowanie przesunięcia dla wyświetlenia
-        const shiftDisplay = step.shift >= 0 ? `+${step.shift}` : `${step.shift}`;
+        // Usuń poprzednie notyfikacje przy zmianie kroku
+        const oldNotifications = document.querySelectorAll('.spa-notification');
+        oldNotifications.forEach(notif => notif.remove());
         
-        // Dynamiczne etykiety w zależności od operacji
-        const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
-        const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
+        // Sprawdź czy w Vigenère litery są takie same i pokaż notyfikację
+        if (currentCipher === 'vigenere' && step.originalIndex === step.newIndex) {
+            showNotification(`Litera pozostaje taka sama (przesunięcie ${step.keyShift} jest wielokrotnością 35)`, 'info');
+        }
         
-        vizArea.innerHTML = `
-            <div class="viz-step-content">
-                <div class="step-header">
-                    <h4>Krok ${step.stepNumber}: ${step.description}</h4>
-                </div>
+        // Bezpośrednie renderowanie bez requestAnimationFrame
+        // Renderuj różne wizualizacje w zależności od szyfru
+        if (currentCipher === 'vigenere') {
+            vizArea.innerHTML = renderVigenereVisualizationStep(step);
+            } else if (currentCipher === 'caesar') {
+                // Renderuj wizualizację Cezara (istniejąca logika)
+                // Formatowanie przesunięcia dla wyświetlenia
+                const shiftAbs = Math.abs(step.shift);
+                const shiftSign = step.shift >= 0 ? '+' : '-';
+                const shiftFormatted = shiftAbs < 10 ? `0${shiftAbs}` : `${shiftAbs}`;
+                const shiftDisplay = `${shiftSign}${shiftFormatted}`;
                 
-                <div class="char-transformation">
-                    <div class="char-box original">
-                        <div class="char-label">${originalLabel}</div>
-                        <div class="char-display">${step.original}</div>
-                        <div class="char-position">Pozycja: ${step.originalIndex}</div>
-                    </div>
-                    
-                    <div class="transform-arrow">
-                        <div class="shift-info">${shiftDisplay}</div>
-                        <div class="arrow">→</div>
-                    </div>
-                    
-                    <div class="char-box transformed">
-                        <div class="char-label">${transformedLabel}</div>
-                        <div class="char-display">${step.transformed}</div>
-                        <div class="char-position">Pozycja: ${step.newIndex}</div>
-                    </div>
-                </div>
+                // Dynamiczne etykiety w zależności od operacji
+                const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
+                const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
                 
-                <div class="alphabet-highlight">
-                    <div class="alphabet-row">
-                        <span class="alphabet-label">${step.isUpperCase ? 'Wielkie' : 'Małe'} litery:</span>
-                        <div class="alphabet-letters">
-                            ${renderAlphabetWithHighlights(step)}
+                vizArea.innerHTML = `
+                    <div class="viz-step-content">
+                        <div class="step-header">
+                            <h4>Krok ${step.stepNumber}: ${step.description}</h4>
+                        </div>
+                        
+                        <div class="char-transformation">
+                            <div class="char-box original">
+                                <div class="char-label">${originalLabel}</div>
+                                <div class="char-display">${step.original}</div>
+                                <div class="char-position">Pozycja: ${step.originalIndex < 10 ? '0' + step.originalIndex : step.originalIndex}</div>
+                            </div>
+                            
+                            <div class="transform-arrow">
+                                <div class="shift-info">${shiftDisplay}</div>
+                                <div class="arrow">→</div>
+                            </div>
+                            
+                            <div class="char-box transformed">
+                                <div class="char-label">${transformedLabel}</div>
+                                <div class="char-display">${step.transformed}</div>
+                                <div class="char-position">Pozycja: ${step.newIndex < 10 ? '0' + step.newIndex : step.newIndex}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="alphabet-highlight">
+                            <div class="alphabet-row">
+                                <span class="alphabet-label">${step.isUpperCase ? 'Wielkie' : 'Małe'} litery:</span>
+                                <div class="alphabet-letters">
+                                    ${renderAlphabetWithHighlights(step)}
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-        `;
+                `;
+        }
     }
     
     function renderAlphabetWithHighlights(step) {
         const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
         return alphabet.split('').map((letter, index) => {
             let className = 'alphabet-letter';
-            if (index === step.originalIndex) className += ' original-highlight';
-            if (index === step.newIndex) className += ' transformed-highlight';
-            return `<span class="${className}">${letter}</span>`;
+            // Dodaj klasy podświetleń zawsze, bez warunku
+            if (index === step.originalIndex) {
+                className += ' original-highlight';
+            }
+            if (index === step.newIndex) {
+                className += ' transformed-highlight';
+            }
+            return `<span class="${className}" data-index="${index}">${letter}</span>`;
+        }).join('');
+    }
+    
+    function renderCaesarAlphabetOriginal(step) {
+        const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
+        return alphabet.split('').map((letter, index) => {
+            let className = 'alphabet-letter';
+            if (index === step.originalIndex) {
+                className += ' original-highlight';
+            }
+            return `<span class="${className}" data-index="${index}">${letter}</span>`;
+        }).join('');
+    }
+    
+    function renderCaesarAlphabetTransformed(step) {
+        const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
+        return alphabet.split('').map((letter, index) => {
+            let className = 'alphabet-letter';
+            if (index === step.newIndex) {
+                className += ' transformed-highlight';
+            }
+            return `<span class="${className}" data-index="${index}">${letter}</span>`;
         }).join('');
     }
     
@@ -330,11 +392,13 @@ document.addEventListener('DOMContentLoaded', () => {
         spaState.isPlaying = true;
         spaState.currentStep = 0;
         
+        // Natychmiast pokaż pierwszy krok
+        updateVisualizationDisplay();
+        
         spaState.playInterval = setInterval(() => {
-            updateVisualizationDisplay();
-            
             if (spaState.currentStep < spaState.visualizationSteps.length - 1) {
                 spaState.currentStep++;
+                updateVisualizationDisplay();
             } else {
                 stopVisualizationPlayback();
                 document.getElementById('play-viz').innerHTML = '▶️';
@@ -354,10 +418,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearVisualization() {
         const vizArea = document.querySelector('.visualization-area');
         if (vizArea) {
+            let message = 'Wybierz szyfr i zaszyfruj tekst aby zobaczyć wizualizację';
+            
+            // Personalizowana wiadomość w zależności od wybranego szyfru
+            if (currentCipher === 'caesar') {
+                message = 'Zaszyfruj tekst aby zobaczyć wizualizację szyfru Cezara';
+            } else if (currentCipher === 'vigenere') {
+                message = 'Zaszyfruj tekst aby zobaczyć wizualizację szyfru Vigenère\'a';
+            } else if (currentCipher === 'railfence') {
+                message = 'Zaszyfruj tekst aby zobaczyć wizualizację szyfru płotowego';
+            } else if (currentCipher === 'enigma') {
+                message = 'Zaszyfruj tekst aby zobaczyć wizualizację Enigmy';
+            }
+            
             vizArea.innerHTML = `
                 <div class="viz-placeholder">
                     <div class="placeholder-icon">🔍</div>
-                    <p>Wybierz szyfr Cezara i zaszyfruj tekst aby zobaczyć wizualizację</p>
+                    <p>${message}</p>
                 </div>
             `;
         }
@@ -365,6 +442,159 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelector('.current-step').textContent = '0';
         document.querySelector('.total-steps').textContent = '0';
         document.querySelector('.progress-fill').style.width = '0%';
+    }
+    
+    // =====================================================
+    // WIZUALIZACJA VIGENÈRE
+    // =====================================================
+    
+    function generateVigenereVisualizationSteps(text, keyword, isEncryption = true) {
+        spaState.visualizationSteps = [];
+        
+        // Oczyść klucz
+        const cleanKeyword = keyword.toUpperCase().replace(new RegExp(`[^${POLISH_UPPER}]`, 'g'), '');
+        if (cleanKeyword.length === 0) return;
+        
+        let stepNumber = 1;
+        let keyIndex = 0;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            let lowerIdx = POLISH_LOWER.indexOf(char);
+            let upperIdx = POLISH_UPPER.indexOf(char);
+            
+            if (lowerIdx !== -1 || upperIdx !== -1) {
+                const isUpper = upperIdx !== -1;
+                const textIdx = isUpper ? upperIdx : lowerIdx;
+                const currentAlphabet = isUpper ? POLISH_UPPER : POLISH_LOWER;
+                
+                // Klucz jest zawsze w wielkich literach
+                const keyChar = cleanKeyword[keyIndex % cleanKeyword.length];
+                const keyShift = POLISH_UPPER.indexOf(keyChar);
+                
+                // Oblicz przesunięcie
+                const shift = isEncryption ? keyShift : (ALPHABET_SIZE - keyShift) % ALPHABET_SIZE;
+                const newIdx = (textIdx + shift) % ALPHABET_SIZE;
+                const transformedChar = currentAlphabet[newIdx];
+                
+                // Formatowanie przesunięcia
+                const shiftDisplay = isEncryption ? `+${keyShift}` : `-${keyShift}`;
+                
+                spaState.visualizationSteps.push({
+                    stepNumber,
+                    position: i,
+                    original: char,
+                    transformed: transformedChar,
+                    keyChar: keyChar,
+                    keyShift: keyShift,
+                    shift: shift,
+                    originalIndex: textIdx,
+                    newIndex: newIdx,
+                    isUpperCase: isUpper,
+                    isEncryption: isEncryption,
+                    keyword: cleanKeyword,
+                    keyIndex: keyIndex % cleanKeyword.length,
+                    description: `'${char}' + klucz '${keyChar}' (${shiftDisplay}) = '${transformedChar}'`
+                });
+                
+                keyIndex++;
+                stepNumber++;
+            }
+        }
+        
+        spaState.currentStep = 0;
+        updateVisualizationDisplay();
+    }
+    
+    function renderVigenereVisualizationStep(step) {
+        // Dynamiczne etykiety
+        const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
+        const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
+        const operationLabel = step.isEncryption ? 'Szyfrowanie' : 'Deszyfrowanie';
+        
+        // Formatowanie przesunięcia z zerem wiodącym
+        const shiftAbs = step.keyShift;
+        const shiftSign = step.isEncryption ? '+' : '-';
+        const shiftFormatted = shiftAbs < 10 ? `0${shiftAbs}` : `${shiftAbs}`;
+        const shiftDisplay = `${shiftSign}${shiftFormatted}`;
+        
+        return `
+            <div class="viz-step-content vigenere-viz">
+                <div class="step-header">
+                    <h4>${operationLabel} - Krok ${step.stepNumber}: ${step.description}</h4>
+                </div>
+                
+                <div class="vigenere-key-display">
+                    <div class="key-info">
+                        <span class="key-label">Słowo kluczowe:</span>
+                        <div class="key-sequence">
+                            ${renderKeySequence(step)}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="char-transformation">
+                    <div class="char-box original">
+                        <div class="char-label">${originalLabel}</div>
+                        <div class="char-display">${step.original}</div>
+                        <div class="char-position">Pozycja: ${step.originalIndex < 10 ? '0' + step.originalIndex : step.originalIndex}</div>
+                    </div>
+                    
+                    <div class="transform-arrow vigenere-arrow">
+                        <div class="key-char-display">
+                            <div class="key-char-label">Litera klucza</div>
+                            <div class="key-char-value">${step.keyChar}</div>
+                            <div class="key-shift-value">Przesunięcie: ${shiftDisplay}</div>
+                        </div>
+                        <div class="arrow">→</div>
+                    </div>
+                    
+                    <div class="char-box transformed">
+                        <div class="char-label">${transformedLabel}</div>
+                        <div class="char-display">${step.transformed}</div>
+                        <div class="char-position">Pozycja: ${step.newIndex < 10 ? '0' + step.newIndex : step.newIndex}</div>
+                    </div>
+                </div>
+                
+                <div class="alphabet-highlight">
+                    <div class="alphabet-row">
+                        <span class="alphabet-label">${step.isUpperCase ? 'Wielkie' : 'Małe'} litery:</span>
+                        <div class="alphabet-letters">
+                            ${renderAlphabetWithHighlights(step)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderVigenereAlphabetOriginal(step) {
+        const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
+        return alphabet.split('').map((letter, index) => {
+            let className = 'alphabet-letter';
+            if (index === step.originalIndex) {
+                className += ' original-highlight';
+            }
+            return `<span class="${className}" data-index="${index}">${letter}</span>`;
+        }).join('');
+    }
+    
+    function renderVigenereAlphabetTransformed(step) {
+        const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
+        return alphabet.split('').map((letter, index) => {
+            let className = 'alphabet-letter';
+            if (index === step.newIndex) {
+                className += ' transformed-highlight';
+            }
+            return `<span class="${className}" data-index="${index}">${letter}</span>`;
+        }).join('');
+    }
+    
+    function renderKeySequence(step) {
+        return step.keyword.split('').map((letter, index) => {
+            const isActive = index === step.keyIndex;
+            return `<span class="key-letter ${isActive ? 'active' : ''}">${letter}</span>`;
+        }).join('');
     }
     
     function showNotification(message, type = 'info') {
@@ -484,6 +714,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             currentCipher = item.dataset.cipher;
             currentCipherName.textContent = item.querySelector('h3').textContent;
+            
+            // Odblokuj textarea i zmień placeholder
+            inputTextarea.disabled = false;
+            inputTextarea.placeholder = 'Wprowadź tekst do zaszyfrowania...';
 
             // Opisy
             const descriptions = {
@@ -541,6 +775,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (alphabetRef) {
                     alphabetRef.classList.add('show');
                 }
+                
+                // Inicjalizuj wizualizację dla Vigenère
+                setTimeout(initializeVisualization, 100);
             }
 
 
@@ -592,6 +829,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = vigenereCipher(input, keyword, true);
             outputText.textContent = result;
+            
+            // Generuj wizualizację dla Vigenère
+            generateVigenereVisualizationSteps(input, keyword, true);
             showNotification('Tekst zaszyfrowany szyfrem Vigenère!', 'success');
         }
 
@@ -639,6 +879,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = vigenereCipher(input, keyword, false);
             outputText.textContent = result;
+            
+            // Generuj wizualizację dla Vigenère
+            generateVigenereVisualizationSteps(input, keyword, false);
             showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
         }
     });
@@ -665,6 +908,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === INPUT EVENTS ===
     inputTextarea.addEventListener('input', updateCharCount);
+    
+    // === BLOKADA TEXTAREA BEZ WYBRANEGO SZYFRU ===
+    inputTextarea.addEventListener('focus', () => {
+        if (!currentCipher) {
+            inputTextarea.blur();
+            showNotification('Najpierw wybierz szyfr!', 'warning');
+        }
+    });
+    
+    inputTextarea.addEventListener('input', () => {
+        if (!currentCipher) {
+            inputTextarea.value = '';
+            showNotification('Najpierw wybierz szyfr!', 'warning');
+        }
+    });
+    
+    // === POCZĄTKOWA BLOKADA TEXTAREA ===
+    inputTextarea.disabled = true;
+    inputTextarea.placeholder = 'Najpierw wybierz szyfr...';
+    
     updateCharCount();
     
     // === INICJALIZACJA ===

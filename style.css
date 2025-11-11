@@ -437,11 +437,14 @@ html {
 /* Obszar wizualizacji */
 .visualization-area {
     min-height: 300px;
+    max-height: 550px;
+    overflow: hidden;
     background-color: #ffffff;
     border: 2px solid #e9ecef;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1rem;
     margin-bottom: 1rem;
+    position: relative;
 }
 
 .viz-placeholder {
@@ -462,15 +465,18 @@ html {
 
 /* Zawartość kroku */
 .viz-step-content {
-    animation: fadeInStep 0.4s ease-in-out;
+    animation: none;
+    will-change: auto;
+    opacity: 1;
+    transform: none;
 }
 
 .step-header h4 {
     color: #495057;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.4rem;
     border-bottom: 2px solid #e9ecef;
-    font-size: 1.1rem;
+    font-size: 0.95rem;
 }
 
 /* Transformacja znaków */
@@ -478,22 +484,18 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 2rem;
-    margin: 2rem 0;
+    gap: 1rem;
+    margin: 1rem 0;
     flex-wrap: wrap;
 }
 
 .char-box {
     text-align: center;
-    padding: 1.5rem;
-    border-radius: 12px;
+    padding: 0.8rem;
+    border-radius: 8px;
     min-width: 120px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
-}
-
-.char-box:hover {
-    transform: translateY(-2px);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: none;
 }
 
 .char-box.original {
@@ -507,19 +509,19 @@ html {
 }
 
 .char-label {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: #555;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.3rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
 }
 
 .char-display {
-    font-size: 2.5rem;
+    font-size: 1.8rem;
     font-weight: bold;
     font-family: 'Courier New', monospace;
-    margin: 0.5rem 0;
+    margin: 0.3rem 0;
     line-height: 1;
 }
 
@@ -532,9 +534,9 @@ html {
 }
 
 .char-position {
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     color: #666;
-    margin-top: 0.5rem;
+    margin-top: 0.3rem;
 }
 
 /* Strzałka transformacji */
@@ -542,27 +544,29 @@ html {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.3rem;
 }
 
 .shift-info {
     background-color: #ffc107;
     color: #856404;
-    padding: 0.3rem 0.8rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 15px;
+    font-size: 0.75rem;
     font-weight: bold;
+    min-width: 42px;
+    text-align: center;
 }
 
 .arrow {
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: #6c757d;
 }
 
 /* Referencja alfabetu */
 .alphabet-reference {
-    margin-top: 1rem;
-    padding: 1rem;
+    margin-top: 0.8rem;
+    padding: 0.8rem;
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
@@ -574,9 +578,9 @@ html {
 }
 
 .alphabet-reference h4 {
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
     color: #495057;
-    font-size: 1rem;
+    font-size: 0.85rem;
 }
 
 .alphabet-display {
@@ -597,13 +601,14 @@ html {
     font-family: 'Courier New', monospace;
     font-size: 0.8rem;
     font-weight: 500;
-    transition: all 0.2s ease;
+    transition: none;
+    will-change: auto;
 }
 
 /* Podświetlanie alfabetu */
 .alphabet-highlight {
-    margin-top: 2rem;
-    padding: 1.5rem;
+    margin-top: 1.5rem;
+    padding: 0.8rem;
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #dee2e6;
@@ -612,16 +617,19 @@ html {
 .alphabet-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
+    gap: 0.6rem;
+    margin-bottom: 0;
 }
 
 .alphabet-label {
-    font-size: 0.85rem;
+    font-size: 0.7rem;
     color: #495057;
-    font-weight: 500;
-    min-width: 100px;
+    font-weight: 600;
+    min-width: 75px;
+    flex-shrink: 0;
 }
+
+/* Informacja o identycznych literach - usunięta, niepotrzebna */
 
 .alphabet-letters {
     display: flex;
@@ -630,9 +638,9 @@ html {
 }
 
 .alphabet-letter.original-highlight {
-    background: linear-gradient(135deg, #2196f3, #1976d2);
-    color: white;
-    border-color: #1565c0;
+    background: linear-gradient(135deg, #2196f3, #1976d2) !important;
+    color: white !important;
+    border-color: #1565c0 !important;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
     z-index: 1;
@@ -640,13 +648,36 @@ html {
 }
 
 .alphabet-letter.transformed-highlight {
-    background: linear-gradient(135deg, #9c27b0, #7b1fa2);
-    color: white;
-    border-color: #6a1b9a;
+    background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
+    color: white !important;
+    border-color: #6a1b9a !important;
     transform: scale(1.1);
     box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
     z-index: 1;
     position: relative;
+}
+
+/* Gdy oryginalna i zaszyfrowana litera są takie same */
+.alphabet-letter.original-highlight.transformed-highlight {
+    background: linear-gradient(135deg, #2196f3, #9c27b0) !important;
+    color: white !important;
+    border: 3px solid #ffc107 !important;
+    transform: scale(1.2);
+    box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4), 0 6px 16px rgba(33, 150, 243, 0.4);
+    z-index: 2;
+    position: relative;
+    animation: pulseGlow 1s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+    0%, 100% { 
+        transform: scale(1.2);
+        box-shadow: 0 6px 16px rgba(156, 39, 176, 0.4), 0 6px 16px rgba(33, 150, 243, 0.4);
+    }
+    50% { 
+        transform: scale(1.25);
+        box-shadow: 0 8px 20px rgba(156, 39, 176, 0.6), 0 8px 20px rgba(33, 150, 243, 0.6);
+    }
 }
 
 /* Ulepszone przyciski kontrolne */
@@ -787,3 +818,170 @@ html {
         padding: 1rem;
     }
 }
+
+/* =====================================================
+   WIZUALIZACJA VIGENÈRE
+   ===================================================== */
+
+.vigenere-viz {
+    animation: none;
+    will-change: auto;
+}
+
+/* Wyświetlanie słowa kluczowego */
+.vigenere-key-display {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border: 2px solid #6f42c1;
+    border-radius: 8px;
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+}
+
+.key-info {
+    text-align: center;
+}
+
+.key-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.key-sequence {
+    display: flex;
+    justify-content: center;
+    gap: 0.3rem;
+    flex-wrap: wrap;
+}
+
+.key-letter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background-color: #ffffff;
+    border: 2px solid #dee2e6;
+    border-radius: 6px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #495057;
+    transition: none;
+}
+
+.key-letter.active {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
+    border-color: #5a32a3;
+    transform: scale(1.15);
+    box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+    z-index: 2;
+    position: relative;
+}
+
+/* Strzałka z informacją o kluczu */
+.vigenere-arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.key-char-display {
+    background: linear-gradient(135deg, #e9ecef, #f8f9fa);
+    border: 2px solid #6f42c1;
+    border-radius: 8px;
+    padding: 0.6rem;
+    text-align: center;
+    min-width: 90px;
+}
+
+.key-char-label {
+    font-size: 0.65rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+    font-weight: 600;
+}
+
+.key-char-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #6f42c1;
+    margin: 0.2rem 0;
+}
+
+.key-shift-value {
+    font-size: 0.7rem;
+    color: #495057;
+    margin-top: 0.2rem;
+    font-weight: 500;
+}
+
+/* Podgląd tablicy Vigenère'a - WYŁĄCZONY */
+.vigenere-table-preview {
+    display: none; /* Ukryte */
+}
+
+/* Responsywność dla Vigenère */
+@media (max-width: 768px) {
+    .vigenere-key-display {
+        padding: 1rem;
+    }
+    
+    .key-letter {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+    }
+    
+    .key-char-display {
+        min-width: 100px;
+        padding: 0.8rem;
+    }
+    
+    .key-char-value {
+        font-size: 1.5rem;
+    }
+    
+    .vigenere-arrow {
+        transform: rotate(90deg);
+        margin: 1.5rem 0;
+    }
+    
+    .vigenere-table-preview {
+        padding: 1rem;
+    }
+    
+    .table-explanation {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .key-sequence {
+        gap: 0.3rem;
+    }
+    
+    .key-letter {
+        width: 28px;
+        height: 28px;
+        font-size: 0.9rem;
+    }
+    
+    .vigenere-key-display {
+        padding: 0.8rem;
+    }
+    
+    .key-char-display {
+        min-width: 80px;
+        padding: 0.6rem;
+    }
+}
+
