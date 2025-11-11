@@ -403,6 +403,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //Pozostałe szyfry ...
+    //Tydzien 4
+        // === FUNKCJA SZYFRU VIGENÈRE (35-literowy polski alfabet) ===
+    function vigenereCipher(text, keyword, encrypt = true) {
+        if (!keyword || keyword.trim() === '') return text;
+
+        const cleanKeyword = keyword.toUpperCase().replace(new RegExp(`[^${POLISH_UPPER}]`, 'g'), '');
+        if (cleanKeyword.length === 0) return text;
+
+        let result = '';
+        let keyIndex = 0;
+
+        for (let char of text) {
+            const lowerIdx = POLISH_LOWER.indexOf(char);
+            const upperIdx = POLISH_UPPER.indexOf(char);
+
+            if (lowerIdx !== -1 || upperIdx !== -1) {
+                const isUpper = upperIdx !== -1;
+                const textIdx = isUpper ? upperIdx : lowerIdx;
+                const alphabet = isUpper ? POLISH_UPPER : POLISH_LOWER;
+
+                // Klucz jest zawsze w wielkich literach
+                const keyChar = cleanKeyword[keyIndex % cleanKeyword.length];
+                const keyShift = POLISH_UPPER.indexOf(keyChar);
+
+                let shift = encrypt ? keyShift : (ALPHABET_SIZE - keyShift) % ALPHABET_SIZE;
+                const newIdx = (textIdx + shift) % ALPHABET_SIZE;
+
+                result += alphabet[newIdx];
+                keyIndex++;
+            } else {
+                // Znaki spoza alfabetu (spacje, cyfry, interpunkcja) – bez zmian
+                result += char;
+            }
+        }
+
+        return result;
+    }
+
 
     // === AKTUALIZACJA LICZNIKA ZNAKÓW ===
     function updateCharCount() {
@@ -489,6 +527,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Inicjalizuj wizualizację po wyborze szyfru Cezara
                 setTimeout(initializeVisualization, 100);
             }
+            // === SZYFR VIGENÈRE ===
+            if (currentCipher === 'vigenere') {
+                settingsGroup.innerHTML = `
+                    <div class="settings-group">
+                        <label for="vigenere-key">Słowo kluczowe:</label>
+                        <input type="text" id="vigenere-key" class="vigenere-input" placeholder="Np. TAJNE" value="TAJNE">
+                        <small class="settings-hint">Tylko polskie litery będą brane pod uwagę</small>
+                    </div>
+                `;
+
+                // Pokaż alfabet (przyda się użytkownikowi)
+                if (alphabetRef) {
+                    alphabetRef.classList.add('show');
+                }
+            }
+
 
             resetAll();
         });
@@ -509,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Wprowadź tekst!', 'warning');
             return;
         }
-
+        //Cezar
         if (currentCipher === 'caesar') {
             const result = caesarCipher(input, shiftValue, true);
             outputText.textContent = result;
@@ -520,6 +574,27 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
         }
+        //Vigenere
+        if (currentCipher === 'vigenere') {
+            const keyInput = document.getElementById('vigenere-key');
+            const keyword = keyInput ? keyInput.value.trim() : '';
+
+            if (!keyword) {
+                showNotification('Wprowadź słowo kluczowe!', 'warning');
+                return;
+            }
+
+            const cleanKey = keyword.toUpperCase().replace(new RegExp(`[^${POLISH_UPPER}]`, 'g'), '');
+            if (cleanKey.length === 0) {
+                showNotification('Klucz musi zawierać przynajmniej jedną polską literę!', 'warning');
+                return;
+            }
+
+            const result = vigenereCipher(input, keyword, true);
+            outputText.textContent = result;
+            showNotification('Tekst zaszyfrowany szyfrem Vigenère!', 'success');
+        }
+
     });
 
     // === ODSZYFROWANIE ===
@@ -535,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Wprowadź tekst!', 'warning');
             return;
         }
-
+        //Cezar
         if (currentCipher === 'caesar') {
             const result = caesarCipher(input, shiftValue, false);
             outputText.textContent = result;
@@ -545,6 +620,26 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Tekst odszyfrowany!', 'success');
         } else {
             outputText.textContent = '[Inne szyfry w budowie]';
+        }
+        //Vigenere
+        if (currentCipher === 'vigenere') {
+            const keyInput = document.getElementById('vigenere-key');
+            const keyword = keyInput ? keyInput.value.trim() : '';
+
+            if (!keyword) {
+                showNotification('Wprowadź słowo kluczowe!', 'warning');
+                return;
+            }
+
+            const cleanKey = keyword.toUpperCase().replace(new RegExp(`[^${POLISH_UPPER}]`, 'g'), '');
+            if (cleanKey.length === 0) {
+                showNotification('Klucz musi zawierać przynajmniej jedną polską literę!', 'warning');
+                return;
+            }
+
+            const result = vigenereCipher(input, keyword, false);
+            outputText.textContent = result;
+            showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
         }
     });
 
