@@ -675,7 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === AKTUALIZACJA LICZNIKA ZNAKÓW ===
     function updateCharCount() {
         const count = inputTextarea.value.length;
-        charCount.textContent = `${count} znak${count === 1 ? '' : count <= 4 ? 'y' : 'ów'}`;
+        charCount.textContent = `${count} znak${count === 1 ? '' : count <= 4 ? 'i' : 'ów'}`;
     }
 
     // === RESET ===
@@ -934,4 +934,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSPA();
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
+
 });
