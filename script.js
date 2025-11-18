@@ -267,9 +267,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const vizArea = document.querySelector('.visualization-area');
         if (!vizArea) return;
         
-        // Usuń poprzednie notyfikacje przy zmianie kroku
-        const oldNotifications = document.querySelectorAll('.spa-notification');
-        oldNotifications.forEach(notif => notif.remove());
+        // NOTE: notifications are now queued; do not remove notifications here
+        // (removing them would break the queue ordering implemented in showNotification)
         
         // Sprawdź czy w Vigenère litery są takie same i pokaż notyfikację
         if (currentCipher === 'vigenere' && step.originalIndex === step.newIndex) {
@@ -619,17 +618,71 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
     }
     
-    function showNotification(message, type = 'info') {
+    // Kolejkowanie notyfikacji — wszystkie powiadomienia będą wkładane
+    // do jednego kontenera, aby nie znikały przy modyfikacjach innych elementów DOM.
+    const _notificationQueue = [];
+    let _notificationProcessing = false;
+
+    // Upewnij się, że istnieje kontener dla notyfikacji
+    function _ensureNotificationContainer() {
+        let container = document.getElementById('spa-notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'spa-notification-container';
+            // Podstawowe style kontenera (można nadpisać w CSS)
+            container.style.position = 'fixed';
+            container.style.top = '1rem';
+            container.style.right = '1rem';
+            container.style.zIndex = '11001';
+            container.style.display = 'flex';
+            container.style.flexDirection = 'column';
+            container.style.gap = '0.5rem';
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    function showNotification(message, type = 'info', duration = 3000) {
+        return new Promise((resolve) => {
+            _notificationQueue.push({ message, type, duration, resolve });
+            _processNotificationQueue();
+        });
+    }
+
+    function _processNotificationQueue() {
+        if (_notificationProcessing) return;
+        if (_notificationQueue.length === 0) return;
+
+        _notificationProcessing = true;
+        const { message, type, duration, resolve } = _notificationQueue.shift();
+
+        const container = _ensureNotificationContainer();
+
         const notification = document.createElement('div');
         notification.className = `spa-notification ${type}`;
         notification.textContent = message;
-        
-        document.body.appendChild(notification);
-        
+        // Zapewnij, że element jest widoczny niezależnie od innych zmian DOM
+        notification.style.willChange = 'opacity, transform';
+        container.appendChild(notification);
+
+        // Daj przeglądarce czas na wyrenderowanie by animacje mogły działać
+        requestAnimationFrame(() => {
+            notification.classList.add('visible');
+        });
+
+        // Czekaj określony czas, a następnie usuń notyfikację
         setTimeout(() => {
+            notification.classList.remove('visible');
             notification.classList.add('fade-out');
-            setTimeout(() => notification.remove(), 300);
-        }, 3000);
+            setTimeout(() => {
+                notification.remove();
+                // rozwiąż obietnicę, aby wywołujący mogli łączyć, jeśli chcą
+                try { resolve(); } catch (e) {}
+                _notificationProcessing = false;
+                // przetwórz następny w kolejce
+                _processNotificationQueue();
+            }, 300);
+        }, duration);
     }
     
     // =====================================================
@@ -1006,8 +1059,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${!stepData.isEncryption ? `
                 <div style="background: rgba(0, 123, 255, 0.1); border-left: 4px solid #007bff; padding: 0.8rem; margin-bottom: 1rem; border-radius: 4px;">
                     <p style="margin: 0; font-size: 0.85rem; color: #0056b3;">
-                        <strong>ℹ️ Ważne:</strong> Podczas odszyfrowywania odczytujemy litery <strong>po zygzaku</strong> (jak podczas szyfrowania). 
-                        To jest właśnie wynik - odszyfrowany tekst!
+                        <strong>Ważne:</strong> Podczas odszyfrowywania odczytujemy litery <strong>po zygzaku</strong> (jak podczas szyfrowania). 
+                        To jest nasz odzyfrowany tekst na bieżącym etapie.
                     </p>
                 </div>
                 ` : ''}
