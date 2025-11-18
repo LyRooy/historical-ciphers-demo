@@ -66,11 +66,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
         
+        // Ukryj/pokaż odpowiednie sekcje
+        const appSection = document.getElementById('app');
+        const quizSection = document.getElementById('quiz');
+        const tutorialSection = document.getElementById('tutorial');
+        const homeSection = document.getElementById('home');
+        
+        // Usuń klasę active ze wszystkich ukrywalnych sekcji
+        if (quizSection) quizSection.classList.remove('active');
+        if (tutorialSection) tutorialSection.classList.remove('active');
+        
+        // Pokaż wybraną sekcję (quiz i tutorial)
+        if (sectionId === 'quiz' && quizSection) {
+            quizSection.classList.add('active');
+        } else if (sectionId === 'tutorial' && tutorialSection) {
+            tutorialSection.classList.add('active');
+        }
+        
         // Płynne przewijanie do sekcji (tylko jeśli nie jest to pierwsze załadowanie)
         const targetSection = document.getElementById(sectionId);
         if (targetSection && !spaState.initialLoad) {
             // Przewiń z offsetem, aby nie ukrywać nawigacji
-            const navHeight = document.querySelector('.main-nav')?.offsetHeight || 0;
+            const navHeight = document.querySelector('.navbar')?.offsetHeight || 0;
             const targetPosition = targetSection.offsetTop - navHeight - 20;
             window.scrollTo({ 
                 top: targetPosition,
@@ -957,6 +974,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const operationLabel = stepData.isEncryption ? 'Szyfrowanie' : 'Deszyfrowanie';
         
+        // Specjalna notyfikacja dla deszyfrowania
+        if (!stepData.isEncryption && stepData.step === 1) {
+            showNotification('Podczas odszyfrowywania odczytujemy litery po zygzaku - to jest wynik!', 'info');
+        }
+        
         let html = `
             <div class="viz-step-content">
                 <div class="step-header">
@@ -980,6 +1002,15 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                     </div>
                 </div>
+                
+                ${!stepData.isEncryption ? `
+                <div style="background: rgba(0, 123, 255, 0.1); border-left: 4px solid #007bff; padding: 0.8rem; margin-bottom: 1rem; border-radius: 4px;">
+                    <p style="margin: 0; font-size: 0.85rem; color: #0056b3;">
+                        <strong>ℹ️ Ważne:</strong> Podczas odszyfrowywania odczytujemy litery <strong>po zygzaku</strong> (jak podczas szyfrowania). 
+                        To jest właśnie wynik - odszyfrowany tekst!
+                    </p>
+                </div>
+                ` : ''}
                 
                 <p class="viz-description" style="margin-bottom: 1rem; text-align: center; color: #cbd5e1; font-size: 0.8rem;">${stepData.description}</p>
                 
