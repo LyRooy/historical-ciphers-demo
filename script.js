@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // === STAN ===
     let currentCipher = null;
     let shiftValue = 3;
+    let railsValue = 3;        // szyfr Płotowy
     
     // === STAN SPA I WIZUALIZACJI ===
     let spaState = {
@@ -631,8 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return char;
         }).join('');
     }
-
-    //Pozostałe szyfry ...
     //Tydzien 4
         // === FUNKCJA SZYFRU VIGENÈRE (35-literowy polski alfabet) ===
     function vigenereCipher(text, keyword, encrypt = true) {
@@ -670,6 +669,61 @@ document.addEventListener('DOMContentLoaded', () => {
 
         return result;
     }
+
+    //Tydzień 5
+    // === SZYFR PŁOTOWY (RAIL FENCE) ===
+    function railFenceEncrypt(text, rails) {
+        if (rails <= 1) return text;
+        
+        const fence = Array.from({ length: rails }, () => []);
+        let row = 0;
+        let direction = 1; // 1 = w dół, -1 = w górę
+         
+        for (const char of text) {
+            fence[row].push(char);
+            row += direction;
+            if (row === rails - 1 || row === 0) direction = -direction;
+        }
+        
+        return fence.flat().join('');
+    }
+    
+    function railFenceDecrypt(ciphertext, rails) {
+        if (rails <= 1) return ciphertext;
+        
+        // Oblicz długości poszczególnych szyn
+        const lengths = Array(rails).fill(0);
+        let row = 0;
+        let direction = 1;
+        
+        for (let i = 0; i < ciphertext.length; i++) {
+            lengths[row]++;
+            row += direction;
+            if (row === rails - 1 || row === 0) direction = -direction;
+        }
+        
+        // Rozdziel ciphertext na szyny
+        const fence = [];
+        let index = 0;
+        for (let r = 0; r < rails; r++) {
+            fence[r] = ciphertext.slice(index, index + lengths[r]).split('');
+            index += lengths[r];
+        }
+        
+        // Odczytaj w kolejności zapisu (zygzak)
+        let result = '';
+        row = 0;
+        direction = 1;
+        
+        for (let i = 0; i < ciphertext.length; i++) {
+            result += fence[row].shift();
+            row += direction;
+            if (row === rails - 1 || row === 0) direction = -direction;
+        }
+
+        return result;
+    }
+
 
 
     // === AKTUALIZACJA LICZNIKA ZNAKÓW ===
@@ -757,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (alphabetRef) {
                     alphabetRef.classList.add('show');
                 }
-                
+                resetAll();
                 // Inicjalizuj wizualizację po wyborze szyfru Cezara
                 setTimeout(initializeVisualization, 100);
             }
@@ -775,13 +829,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (alphabetRef) {
                     alphabetRef.classList.add('show');
                 }
-                
+                resetAll();
                 // Inicjalizuj wizualizację dla Vigenère
                 setTimeout(initializeVisualization, 100);
             }
 
+            // === SZYFR PŁOTOWY ===
+            if (currentCipher === 'railfence') {
+                settingsGroup.innerHTML = `
+                    <div class="settings-group">
+                       <label for="railfence-rails">Wysokość płotu (klucz): <strong id="rails-value">3</strong></label>
+                       <input type="range" id="railfence-rails" min="2" max="20" value="3" class="shift-slider">
+                       <small class="settings-hint">Min 2, maks 20</small> 
+                    </div>
+                `;
+                //Komentarz do ilości szyn:
+                /*
+                 2–4 szyny → bardzo słaby szyfr (łatwo złamać „na oko”)
+                 5–10 szyn → typowa siła historyczna, nadal łatwy do złamania, ale już wymaga analizy
+                 15–20 szyn → już bardzo mocno pomieszany tekst, dla celów edukacyjnych w zupełności wystarczy
+                */
+                
+                const railsSlider = document.getElementById('railfence-rails');
+                const railsDisplay = document.getElementById('rails-value');
+                
+                // Aktualizacja wartości przy przesuwaniu suwaka
+                railsSlider.addEventListener('input', () => {
+                    railsValue = parseInt(railsSlider.value);
+                    railsDisplay.textContent = railsValue;
+                });
+                
+                if (alphabetRef){
+                    alphabetRef.classList.add('show');
+                }
+                resetAll(); 
+            }
 
-            resetAll();
         });
     });
 
@@ -834,6 +917,13 @@ document.addEventListener('DOMContentLoaded', () => {
             generateVigenereVisualizationSteps(input, keyword, true);
             showNotification('Tekst zaszyfrowany szyfrem Vigenère!', 'success');
         }
+        //PŁOTOWY
+        if (currentCipher === 'railfence') {
+            if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
+            const result = railFenceEncrypt(input, railsValue);
+            outputText.textContent = result;
+            showNotification('Tekst zaszyfrowany szyfrem płotowym!', 'success');
+        }
 
     });
 
@@ -883,6 +973,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, false);
             showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
+        }
+
+        //Płotowy
+        if (currentCipher === 'railfence') {
+            if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
+            const result = railFenceDecrypt(input, railsValue);
+            outputText.textContent = result;
+            showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
         }
     });
 
