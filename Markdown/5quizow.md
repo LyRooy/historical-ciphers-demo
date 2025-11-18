@@ -5,7 +5,7 @@ A) NRW · B) NRZ · C) MQW · D) MTX
 Odp.: C
 
 Odszyfruj WKG ŚXLEM przy przesunięciu 3.
-A) THE QUICK · B) QUICK THE · C) OCŻ LÓDWĘ · D) OCB NREZH
+A) THE QUICK · B) LAS DRZEW  · C) KOT KONIK· D) OCB NREZH
 Odp.: A
 
 Litera D została zaszyfrowana jako J. Jakie przesunięcie?
