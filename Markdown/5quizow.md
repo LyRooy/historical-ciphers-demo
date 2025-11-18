@@ -26,7 +26,7 @@ Odp.: D
 
 Odszyfruj ZGNEQOG przy przesunięciu 3.
 A) PICTURE · B) WELCOME · C) WĘMDÓŃĘ · D) TEACHER
-Odp.: C
+Odp.: B
 
 Jeśli przesunięcie = 0, to wynik szyfrowania:
 A) jest losowy · B) jest tekstem jawnym · C) zależy od klucza · D) jest anagramem tekstu
