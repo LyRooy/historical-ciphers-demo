@@ -671,58 +671,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     //Tydzień 5
-    // === SZYFR PŁOTOWY (RAIL FENCE) ===
+    // === POPRAWIONY SZYFR PŁOTOWY (z usuwaniem spacji i znaków specjalnych) ===
     function railFenceEncrypt(text, rails) {
         if (rails <= 1) return text;
+        // 1. Usuń wszystko oprócz polskich liter, zachowaj wielkość liter
+        const lettersOnly = [...text].filter(char => 
+            POLISH_LOWER.includes(char) || POLISH_UPPER.includes(char)
+        ).join('');
+        
+        if (lettersOnly.length === 0) return '';
         
         const fence = Array.from({ length: rails }, () => []);
         let row = 0;
         let direction = 1; // 1 = w dół, -1 = w górę
-         
-        for (const char of text) {
+        
+        for (const char of lettersOnly) {
             fence[row].push(char);
             row += direction;
             if (row === rails - 1 || row === 0) direction = -direction;
         }
-        
-        return fence.flat().join('');
-    }
-    
-    function railFenceDecrypt(ciphertext, rails) {
-        if (rails <= 1) return ciphertext;
-        
-        // Oblicz długości poszczególnych szyn
-        const lengths = Array(rails).fill(0);
-        let row = 0;
-        let direction = 1;
-        
-        for (let i = 0; i < ciphertext.length; i++) {
-            lengths[row]++;
-            row += direction;
-            if (row === rails - 1 || row === 0) direction = -direction;
+        return fence.flat().join(''); // bez spacji!
         }
         
-        // Rozdziel ciphertext na szyny
-        const fence = [];
-        let index = 0;
-        for (let r = 0; r < rails; r++) {
-            fence[r] = ciphertext.slice(index, index + lengths[r]).split('');
-            index += lengths[r];
+        function railFenceDecrypt(ciphertext, rails) {
+            if (rails <= 1) return ciphertext;
+            
+            const length = ciphertext.length;
+            if (length === 0) return '';
+            
+            // Oblicz długości poszczególnych szyn
+            const lengths = Array(rails).fill(0);
+            let row = 0;
+            let direction = 1;
+            
+            for (let i = 0; i < length; i++) {
+                lengths[row]++;
+                row += direction;
+                if (row === rails - 1 || row === 0) direction = -direction;
+            }
+            
+            // Rozdziel ciphertext na szyny
+            const fence = [];
+            let index = 0;
+            for (let r = 0; r < rails; r++) {
+                fence[r] = ciphertext.slice(index, index + lengths[r]).split('');
+                index += lengths[r];
+            }
+            
+            // Odczytaj w kolejności zapisu
+            let result = '';
+            row = 0;
+            direction = 1;
+            
+            for (let i = 0; i < length; i++) {
+                result += fence[row].shift();
+                row += direction;
+                if (row === rails - 1 || row === 0) direction = -direction;
+            }
+            return result;
         }
-        
-        // Odczytaj w kolejności zapisu (zygzak)
-        let result = '';
-        row = 0;
-        direction = 1;
-        
-        for (let i = 0; i < ciphertext.length; i++) {
-            result += fence[row].shift();
-            row += direction;
-            if (row === rails - 1 || row === 0) direction = -direction;
-        }
-
-        return result;
-    }
 
 
 
@@ -919,10 +926,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         //PŁOTOWY
         if (currentCipher === 'railfence') {
-            if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
+            if (railsValue < 2) { 
+                showNotification('Liczba szyn musi być większa niż 1!', 'warning'); 
+                return; 
+            }
             const result = railFenceEncrypt(input, railsValue);
-            outputText.textContent = result;
-            showNotification('Tekst zaszyfrowany szyfrem płotowym!', 'success');
+            outputText.textContent = result || '(brak liter do zaszyfrowania)';
+            showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
         }
 
     });
@@ -977,7 +987,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         //Płotowy
         if (currentCipher === 'railfence') {
-            if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
+            if (railsValue < 2) { 
+                showNotification('Liczba szyn musi być większa niż 1!', 'warning'); 
+                return; 
+            }
             const result = railFenceDecrypt(input, railsValue);
             outputText.textContent = result;
             showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
