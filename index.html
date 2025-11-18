@@ -240,6 +240,72 @@
         </div>
     </section>
 
+    <!-- Sekcja Quiz -->
+    <section id="quiz" class="quiz-section">
+        <div class="container">
+            <h2 class="section-title">Quiz kryptograficzny</h2>
+            <p class="section-subtitle">Sprawdź swoją wiedzę z klasycznych szyfrów!</p>
+            
+            <!-- Główne quizy -->
+            <div class="quiz-categories main-quiz-categories">
+                <div class="quiz-category-card" data-quiz="basic">
+                    <h3>Poziom 1 – Podstawowy</h3>
+                    <p>10 pytań · łatwe</p>
+                    <span class="difficulty easy">Łatwy</span>
+                </div>
+                <div class="quiz-category-card" data-quiz="advanced">
+                    <h3>Poziom 2 – Zaawansowany</h3>
+                    <p>15 pytań · średnie/trudne</p>
+                    <span class="difficulty medium">Zaawansowany</span>
+                </div>
+                <div class="quiz-category-card" data-quiz="specific">
+                    <h3>Szyfry i pojęcia</h3>
+                    <p>5 tematycznych quizów po 10 pytań</p>
+                    <span class="difficulty hard">Specjalistyczny</span>
+                </div>
+            </div>
+            
+            <!-- Quizy tematyczne -->
+            <div id="specific-quizzes" class="quiz-categories" style="display:none; margin-top:2rem;"></div>
+            
+            <!-- Kontener quizu -->
+            <div id="quiz-container" class="quiz-container" style="display: none;">
+                <div class="quiz-header">
+                    <h3 id="quiz-title">Wybierz quiz</h3>
+                    <div class="quiz-progress">
+                        Pytanie <span id="current-question">1</span> / <span id="total-questions">10</span>
+                        <div class="progress-bar-small">
+                            <div id="progress-fill" class="progress-fill" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="quiz-questions">
+                    <div class="quiz-question" id="question-text"></div>
+                    <div class="quiz-options" id="options-container"></div>
+                    <div class="quiz-controls">
+                        <button id="prev-question" class="btn btn-secondary">← Poprzednie</button>
+                        <button id="next-question" class="btn btn-primary">Następne →</button>
+                        <button id="submit-quiz" class="btn btn-success" style="display: none;">Zakończ quiz</button>
+                    </div>
+                </div>
+                
+                <div id="quiz-result" class="quiz-result" style="display: none;">
+                    <h3>Wynik: <span id="score-display"></span></h3>
+                    <p id="score-message"></p>
+                    
+                    <div id="answers-review" class="answers-review"></div>
+                    
+                    <div class="quiz-controls" style="margin-top:2rem;">
+                        <button id="restart-quiz" class="btn btn-primary">Spróbuj ponownie</button>
+                        <button id="back-to-categories" class="btn btn-outline">Powrót do wyboru</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
     <!-- Sekcja ostrzeżenia -->
     <div class="warning-banner">
         <div class="container">
@@ -275,6 +341,7 @@
     </footer>
 
     <script src="script.js"></script>
+    <script src="quizes.js"></script>
 </body>
 </html>
 

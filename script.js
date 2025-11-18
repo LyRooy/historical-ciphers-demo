@@ -1033,4 +1033,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
 
+
+    
 });
