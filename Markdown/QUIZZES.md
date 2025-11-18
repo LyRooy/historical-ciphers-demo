@@ -22,7 +22,7 @@ C) C
 D) D
 ✅ Poprawna odpowiedź: C
 
-4. Odszyfruj szyfrogram „ĘCIIM” przy przesunięciu 3.
+4. Odszyfruj szyfrogram „KGNNQ” przy przesunięciu 3.
 A) HELLO
 B) HANNA
 C) MAMMA
@@ -103,7 +103,7 @@ C) VZCFAJQWBM
 D) TBRSRZYCO
 ✅ Poprawna odpowiedź: D
 
-5. Vigenère – odszyfruj „DLGCM XYTQ” kluczem „HASLO”.
+5. Vigenère – odszyfruj „RRÓAHWNAX” kluczem „HASLO”.
 A) TAJNE DANE
 B) KOD TEST
 C) KRYPTONIM
@@ -118,7 +118,7 @@ D) Nie da się tego zrobić
 ✅ Poprawna odpowiedź: A
 
 7. Rail Fence – dla 3 szyn zaszyfruj „KRYPTOGRAFIA”.
-A) KYTGAIRPORFA
+A) KTARPORFAYGI
 B) KRYGFATOARPI
 C) KRGAYFTORAPI
 D) KRGAFYTORAPI
