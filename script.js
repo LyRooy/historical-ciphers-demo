@@ -1501,15 +1501,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 settingsGroup.innerHTML = `
                     <div class="settings-group">
                        <label for="railfence-rails">Wysokość płotu (klucz): <strong id="rails-value">3</strong></label>
-                       <input type="range" id="railfence-rails" min="2" max="20" value="3" class="shift-slider">
-                       <small class="settings-hint">Min 2, maks 20</small> 
+                       <input type="range" id="railfence-rails" min="2" max="10" value="3" class="shift-slider">
+                       <small class="settings-hint">Min 2, maks 10</small> 
                     </div>
                 `;
                 //Komentarz do ilości szyn:
                 /*
                  2–4 szyny → bardzo słaby szyfr (łatwo złamać „na oko”)
-                 5–10 szyn → typowa siła historyczna, nadal łatwy do złamania, ale już wymaga analizy
-                 15–20 szyn → już bardzo mocno pomieszany tekst, dla celów edukacyjnych w zupełności wystarczy
+                 5–8 szyn → typowa siła historyczna, nadal łatwy do złamania, ale już wymaga analizy
+                 9–10 szyn → mocniejsze pomieszanie tekstu, wystarczające dla celów edukacyjnych
                 */
                 
                 const railsSlider = document.getElementById('railfence-rails');
