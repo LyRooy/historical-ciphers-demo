@@ -29,7 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
         visualizationSteps: [],
         currentStep: 0,
         isPlaying: false,
-        initialLoad: true  // Flaga dla pierwszego załadowania
+        initialLoad: true,  // Flaga dla pierwszego załadowania
+        tableModalOpen: false,
+        modalPlaying: false,
+        modalPlayInterval: null
     };
 
     // =====================================================
@@ -138,6 +141,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="step-counter">
                         Krok <span class="current-step">0</span> z <span class="total-steps">0</span>
                     </div>
+                    <button class="table-viz-btn" id="show-table-btn" style="display: none;" onclick="openTableModal()">
+                        📊 Tabela substytucji
+                    </button>
                 </div>
                 
                 <div class="visualization-area">
@@ -170,17 +176,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const nextBtn = document.getElementById('next-step');
         
         if (prevBtn) {
-            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
             prevBtn.onclick = () => previousVisualizationStep();
         }
         
         if (playBtn) {
-            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
             playBtn.onclick = () => toggleVisualizationPlayback();
         }
         
         if (nextBtn) {
-            // Ikona już jest w HTML, tylko dodajemy funkcjonalność
             nextBtn.onclick = () => nextVisualizationStep();
         }
     }
@@ -256,11 +259,12 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification(`Litera pozostaje taka sama (przesunięcie ${step.keyShift} jest wielokrotnością 35)`, 'info');
         }
         
-        // Bezpośrednie renderowanie bez requestAnimationFrame
         // Renderuj różne wizualizacje w zależności od szyfru
         if (currentCipher === 'vigenere') {
             vizArea.innerHTML = renderVigenereVisualizationStep(step);
-            } else if (currentCipher === 'caesar') {
+        } else if (currentCipher === 'railfence') {
+            vizArea.innerHTML = renderRailFenceVisualizationStep(step);
+        } else if (currentCipher === 'caesar') {
                 // Renderuj wizualizację Cezara (istniejąca logika)
                 // Formatowanie przesunięcia dla wyświetlenia
                 const shiftAbs = Math.abs(step.shift);
@@ -610,6 +614,566 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => notification.remove(), 300);
         }, 3000);
     }
+    
+    // =====================================================
+    // WIZUALIZACJA TABELOWA VIGENÈRE (TABULA SUBSTYTUCJI) - MODAL
+    // =====================================================
+    
+    function openTableModal() {
+        if (currentCipher !== 'vigenere' || spaState.visualizationSteps.length === 0) return;
+        
+        // Zatrzymaj odtwarzanie wizualizacji głównej
+        if (spaState.isPlaying) {
+            stopVisualizationPlayback();
+            const playBtn = document.getElementById('play-viz');
+            if (playBtn) playBtn.innerHTML = '▶️';
+        }
+        
+        const step = spaState.visualizationSteps[spaState.currentStep];
+        
+        const modalHTML = `
+            <div class="table-modal-overlay" id="table-modal">
+                <div class="table-modal-content">
+                    <div class="table-modal-header">
+                        <h3>Tabela Substytucji Vigenère</h3>
+                        <div class="modal-controls">
+                            <button class="btn-icon btn-icon-sm" title="Poprzedni krok" onclick="modalPrevStep()">
+                                ⏮️
+                            </button>
+                            <button class="btn-icon btn-icon-sm" title="Odtwórz" id="modal-play-btn" onclick="toggleModalPlayback()">
+                                ▶️
+                            </button>
+                            <button class="btn-icon btn-icon-sm" title="Następny krok" onclick="modalNextStep()">
+                                ⏭️
+                            </button>
+                            <span class="modal-step-counter">
+                                Krok <span id="modal-current-step">${spaState.currentStep + 1}</span> / <span id="modal-total-steps">${spaState.visualizationSteps.length}</span>
+                            </span>
+                        </div>
+                        <button class="modal-close-btn" onclick="closeTableModal()">&times;</button>
+                    </div>
+                    <div class="table-modal-body" id="modal-table-body">
+                        ${renderVigenereTableVisualization(step)}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        spaState.tableModalOpen = true;
+        document.body.style.overflow = 'hidden';
+        
+        // Pokaż notyfikację dla deszyfrowania NATYCHMIAST po otwarciu modala
+        if (!step.isEncryption) {
+            showNotification('Przy deszyfrowaniu: kolumna to odszyfrowana litera, przecięcie to zaszyfrowana. Zobacz legendę! ⬇️', 'info');
+        }
+    }
+    
+    function closeTableModal() {
+        const modal = document.getElementById('table-modal');
+        if (modal) {
+            // Zatrzymaj odtwarzanie w modalu
+            if (spaState.modalPlaying) {
+                stopModalPlayback();
+            }
+            modal.remove();
+            spaState.tableModalOpen = false;
+            document.body.style.overflow = '';
+        }
+    }
+    
+    function updateModalContent() {
+        if (!spaState.tableModalOpen) return;
+        
+        const step = spaState.visualizationSteps[spaState.currentStep];
+        const modalBody = document.getElementById('modal-table-body');
+        const currentStepEl = document.getElementById('modal-current-step');
+        
+        if (modalBody) {
+            modalBody.innerHTML = renderVigenereTableVisualization(step);
+        }
+        
+        if (currentStepEl) {
+            currentStepEl.textContent = spaState.currentStep + 1;
+        }
+    }
+    
+
+    
+    function modalPrevStep() {
+        if (spaState.currentStep > 0) {
+            spaState.currentStep--;
+            updateModalContent();
+            updateVisualizationDisplay();
+        }
+    }
+    
+    function modalNextStep() {
+        if (spaState.currentStep < spaState.visualizationSteps.length - 1) {
+            spaState.currentStep++;
+            updateModalContent();
+            updateVisualizationDisplay();
+        }
+    }
+    
+    function toggleModalPlayback() {
+        const playBtn = document.getElementById('modal-play-btn');
+        
+        if (spaState.modalPlaying) {
+            stopModalPlayback();
+            if (playBtn) playBtn.innerHTML = '▶️';
+        } else {
+            // Jeśli jesteśmy na ostatnim kroku, wracamy na początek
+            if (spaState.currentStep >= spaState.visualizationSteps.length - 1) {
+                spaState.currentStep = 0;
+                updateModalContent();
+                updateVisualizationDisplay();
+            }
+            startModalPlayback();
+            if (playBtn) playBtn.innerHTML = '⏸️';
+        }
+    }
+    
+    function startModalPlayback() {
+        if (spaState.visualizationSteps.length === 0) return;
+        
+        spaState.modalPlaying = true;
+        
+        spaState.modalPlayInterval = setInterval(() => {
+            if (spaState.currentStep < spaState.visualizationSteps.length - 1) {
+                spaState.currentStep++;
+                updateModalContent();
+                updateVisualizationDisplay();
+            } else {
+                stopModalPlayback();
+                const playBtn = document.getElementById('modal-play-btn');
+                if (playBtn) playBtn.innerHTML = '▶️';
+                showNotification('Wizualizacja zakończona!', 'success');
+            }
+        }, 1500);
+    }
+    
+    function stopModalPlayback() {
+        spaState.modalPlaying = false;
+        if (spaState.modalPlayInterval) {
+            clearInterval(spaState.modalPlayInterval);
+            spaState.modalPlayInterval = null;
+        }
+    }
+    
+    // Funkcja globalna dla onclick w HTML
+    window.closeTableModal = closeTableModal;
+    window.openTableModal = openTableModal;
+    window.modalPrevStep = modalPrevStep;
+    window.modalNextStep = modalNextStep;
+    window.toggleModalPlayback = toggleModalPlayback;
+    
+    // =====================================================
+    // WIZUALIZACJA SZYFRU PŁOTOWEGO
+    // =====================================================
+    
+    function generateRailFenceVisualizationSteps(text, rails, isEncryption = true) {
+        spaState.visualizationSteps = [];
+        
+        if (rails <= 1) return;
+        
+        // Usuń spacje z tekstu dla wizualizacji
+        const originalText = text;
+        const cleanText = text.replace(/\s+/g, '');
+        const textLength = cleanText.length;
+        
+        if (isEncryption) {
+            // SZYFROWANIE - umieszczamy litery w zygzaku
+            const fullFence = Array.from({ length: rails }, () => 
+                Array(textLength).fill(null)
+            );
+            
+            let row = 0;
+            let direction = 1;
+            
+            // Wypełniamy płot znakami
+            for (let i = 0; i < textLength; i++) {
+                fullFence[row][i] = cleanText[i];
+                
+                if (row === 0) {
+                    direction = 1;
+                } else if (row === rails - 1) {
+                    direction = -1;
+                }
+                
+                row += direction;
+            }
+            
+            // Generuj kroki wizualizacji
+            row = 0;
+            direction = 1;
+            
+            for (let step = 0; step < textLength; step++) {
+                const fenceSnapshot = Array.from({ length: rails }, () => 
+                    Array(textLength).fill(null)
+                );
+                
+                let r = 0;
+                let dir = 1;
+                for (let i = 0; i <= step; i++) {
+                    fenceSnapshot[r][i] = cleanText[i];
+                    
+                    if (r === 0) {
+                        dir = 1;
+                    } else if (r === rails - 1) {
+                        dir = -1;
+                    }
+                    
+                    r += dir;
+                }
+                
+                spaState.visualizationSteps.push({
+                    stepNumber: step + 1,
+                    currentRail: row,
+                    fence: fenceSnapshot,
+                    fullFence: fullFence,
+                    cleanText: cleanText,
+                    originalText: originalText,
+                    step: step + 1,
+                    isEncryption: true,
+                    description: `Umieszczenie litery '${cleanText[step]}' w rzędzie ${row + 1}`
+                });
+                
+                if (row === 0) {
+                    direction = 1;
+                } else if (row === rails - 1) {
+                    direction = -1;
+                }
+                
+                row += direction;
+            }
+        } else {
+            // DESZYFROWANIE - pokazujemy jak litery pojawiają się w zygzaku (jak odczytujemy)
+            
+            // Najpierw oblicz długości poszczególnych rzędów
+            const lengths = Array(rails).fill(0);
+            let row = 0;
+            let direction = 1;
+            
+            for (let i = 0; i < textLength; i++) {
+                lengths[row]++;
+                
+                if (row === 0) {
+                    direction = 1;
+                } else if (row === rails - 1) {
+                    direction = -1;
+                }
+                
+                row += direction;
+            }
+            
+            // Rozdziel zaszyfrowany tekst na rzędy
+            const fence = Array.from({ length: rails }, () => []);
+            let index = 0;
+            for (let r = 0; r < rails; r++) {
+                for (let i = 0; i < lengths[r]; i++) {
+                    fence[r].push(cleanText[index++]);
+                }
+            }
+            
+            // Stwórz mapę pozycji zygzaka do rzędów
+            const zigzagMap = [];
+            row = 0;
+            direction = 1;
+            const railIndices = Array(rails).fill(0);
+            
+            for (let pos = 0; pos < textLength; pos++) {
+                zigzagMap.push({
+                    rail: row,
+                    railIndex: railIndices[row],
+                    char: fence[row][railIndices[row]]
+                });
+                railIndices[row]++;
+                
+                if (row === 0) {
+                    direction = 1;
+                } else if (row === rails - 1) {
+                    direction = -1;
+                }
+                
+                row += direction;
+            }
+            
+            // Generuj kroki - pokazujemy jak kolejne litery pojawiają się w płocie
+            for (let step = 0; step < textLength; step++) {
+                // Stwórz płot pokazujący tylko litery do tej pory
+                const progressFence = Array.from({ length: rails }, () => 
+                    Array(textLength).fill(null)
+                );
+                
+                // Określ pozycje kolumn dla każdego rzędu
+                const columnPositions = Array.from({ length: rails }, () => []);
+                let r = 0;
+                let dir = 1;
+                
+                for (let pos = 0; pos < textLength; pos++) {
+                    columnPositions[r].push(pos);
+                    
+                    if (r === 0) {
+                        dir = 1;
+                    } else if (r === rails - 1) {
+                        dir = -1;
+                    }
+                    r += dir;
+                }
+                
+                // Wypełnij płot literami do obecnego kroku
+                for (let i = 0; i <= step; i++) {
+                    const pos = zigzagMap[i];
+                    const colPos = columnPositions[pos.rail][pos.railIndex];
+                    progressFence[pos.rail][colPos] = pos.char;
+                }
+                
+                const currentPos = zigzagMap[step];
+                
+                spaState.visualizationSteps.push({
+                    stepNumber: step + 1,
+                    currentRail: currentPos.rail,
+                    currentColumn: columnPositions[currentPos.rail][currentPos.railIndex],
+                    fence: progressFence,
+                    cleanText: cleanText,
+                    originalText: originalText,
+                    step: step + 1,
+                    isEncryption: false,
+                    currentChar: currentPos.char,
+                    description: `Odczyt litery '${currentPos.char}' z rzędu ${currentPos.rail + 1}`
+                });
+            }
+        }
+        
+        spaState.currentStep = 0;
+        updateVisualizationDisplay();
+    }
+    
+    function renderRailFenceVisualizationStep(stepData) {
+        const rails = stepData.isEncryption ? stepData.fence.length : stepData.fence.length;
+        const cleanText = stepData.cleanText;
+        const originalText = stepData.originalText;
+        
+        const operationLabel = stepData.isEncryption ? 'Szyfrowanie' : 'Deszyfrowanie';
+        
+        let html = `
+            <div class="viz-step-content">
+                <div class="step-header">
+                    <h4>${operationLabel} - Krok ${stepData.step} / ${cleanText.length}</h4>
+                </div>
+                
+                <div style="display: flex; justify-content: center; align-items: center; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                    <div style="text-align: center;">
+                        <p style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Oryginalny tekst:</p>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(99, 102, 241, 0.15); border: 2px solid #6366f1; border-radius: 6px;">
+                            <code style="font-size: 0.85rem; color: #818cf8; font-family: 'Courier New', monospace;">${originalText}</code>
+                        </div>
+                    </div>
+                    
+                    <div style="color: #94a3b8; font-size: 1rem;">→</div>
+                    
+                    <div style="text-align: center;">
+                        <p style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Bez spacji:</p>
+                        <div style="padding: 0.4rem 0.8rem; background: rgba(99, 102, 241, 0.1); border: 1px solid #6366f1; border-radius: 6px;">
+                            <code style="font-size: 0.85rem; color: #818cf8; font-family: 'Courier New', monospace;">${cleanText}</code>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="viz-description" style="margin-bottom: 1rem; text-align: center; color: #cbd5e1; font-size: 0.8rem;">${stepData.description}</p>
+                
+                <div class="rail-fence-grid">
+        `;
+        
+        if (stepData.isEncryption) {
+            // SZYFROWANIE - pokazujemy jak zapełniamy płot
+            const fence = stepData.fence;
+            const textLength = fence[0].length;
+            
+            for (let rail = 0; rail < rails; rail++) {
+                html += `<div class="rail-row" data-rail="${rail}">`;
+                
+                for (let pos = 0; pos < textLength; pos++) {
+                    const char = fence[rail][pos];
+                    let cellClass = 'rail-cell';
+                    
+                    if (char !== null) {
+                        cellClass += ' filled';
+                        if (pos === stepData.step - 1 && rail === stepData.currentRail) {
+                            cellClass += ' highlight';
+                        }
+                    }
+                    
+                    html += `<div class="${cellClass}">${char !== null ? char : '·'}</div>`;
+                }
+                
+                html += `<span class="rail-number">Rząd ${rail + 1}</span></div>`;
+            }
+        } else {
+            // DESZYFROWANIE - pokazujemy jak litery pojawiają się po kolei w zygzaku (jak w szyfrowaniu)
+            const fence = stepData.fence;
+            
+            for (let rail = 0; rail < rails; rail++) {
+                html += `<div class="rail-row" data-rail="${rail}">`;
+                
+                for (let pos = 0; pos < fence[rail].length; pos++) {
+                    const char = fence[rail][pos];
+                    let cellClass = 'rail-cell';
+                    
+                    if (char !== null) {
+                        cellClass += ' filled';
+                        // Podświetl aktualnie dodawaną literę
+                        if (rail === stepData.currentRail && pos === stepData.currentColumn) {
+                            cellClass += ' highlight';
+                        }
+                    } else {
+                        cellClass += ' empty';
+                    }
+                    
+                    html += `<div class="${cellClass}">${char !== null ? char : '·'}</div>`;
+                }
+                
+                html += `<span class="rail-number">Rząd ${rail + 1}</span></div>`;
+            }
+        }
+        
+        html += `
+                </div>
+                <div style="margin-top: 1rem; text-align: center;">
+                    <span style="color: #cbd5e1; font-size: 0.875rem;">
+                        Aktualny poziom: ${stepData.currentRail + 1} / ${rails} | 
+                        Postęp: ${stepData.step} / ${cleanText.length}
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        return html;
+    }
+    
+    function renderVigenereTableVisualization(step) {
+        const operationLabel = step.isEncryption ? 'Szyfrowanie' : 'Deszyfrowanie';
+        
+        // Generuj tabelę
+        let tableHTML = '<div class="tabula-recta-container">';
+        
+        // Nagłówek z literą klucza
+        tableHTML += `
+            <div class="table-header-info">
+                <div class="table-title">${operationLabel} - Krok ${step.stepNumber}</div>
+                <div class="table-operation">
+                    <span class="original-char-label">Tekst: <strong>${step.original}</strong></span>
+                    <span class="key-char-label">Klucz: <strong>${step.keyChar}</strong></span>
+                    <span class="result-char-label">Wynik: <strong>${step.transformed}</strong></span>
+                </div>
+            </div>
+        `;
+        
+        // Tabela
+        tableHTML += '<div class="tabula-recta-scroll"><table class="tabula-recta">';
+        
+        if (step.isEncryption) {
+            // SZYFROWANIE: wiersz = klucz, kolumna = oryginalny tekst, przecięcie = zaszyfrowany
+            // Pierwszy wiersz - nagłówek z alfabetem
+            tableHTML += '<tr><th class="corner-cell"></th>';
+            for (let i = 0; i < ALPHABET_SIZE; i++) {
+                const isHighlighted = i === step.originalIndex;
+                tableHTML += `<th class="header-cell ${isHighlighted ? 'highlight-col' : ''}">${POLISH_UPPER[i]}</th>`;
+            }
+            tableHTML += '</tr>';
+            
+            // Wiersze z przesunięciami
+            for (let row = 0; row < ALPHABET_SIZE; row++) {
+                const isHighlightedRow = row === step.keyShift;
+                tableHTML += `<tr><th class="row-header ${isHighlightedRow ? 'highlight-row' : ''}">${POLISH_UPPER[row]}</th>`;
+                
+                for (let col = 0; col < ALPHABET_SIZE; col++) {
+                    const shiftedIndex = (col + row) % ALPHABET_SIZE;
+                    const letter = POLISH_UPPER[shiftedIndex];
+                    
+                    const isIntersection = (row === step.keyShift && col === step.originalIndex);
+                    const isInHighlightedRow = row === step.keyShift;
+                    const isInHighlightedCol = col === step.originalIndex;
+                    
+                    let cellClass = 'table-cell';
+                    if (isIntersection) {
+                        cellClass += ' intersection';
+                    } else if (isInHighlightedRow) {
+                        cellClass += ' in-row';
+                    } else if (isInHighlightedCol) {
+                        cellClass += ' in-col';
+                    }
+                    
+                    tableHTML += `<td class="${cellClass}">${letter}</td>`;
+                }
+                
+                tableHTML += '</tr>';
+            }
+        } else {
+            // DESZYFROWANIE: wiersz = klucz, szukamy w wierszu litery zaszyfrowanej, kolumna to odszyfrowana
+            // Pierwszy wiersz - nagłówek z alfabetem
+            tableHTML += '<tr><th class="corner-cell"></th>';
+            for (let i = 0; i < ALPHABET_SIZE; i++) {
+                const isHighlighted = i === step.newIndex; // kolumna to wynik (odszyfrowana litera)
+                tableHTML += `<th class="header-cell ${isHighlighted ? 'highlight-col' : ''}">${POLISH_UPPER[i]}</th>`;
+            }
+            tableHTML += '</tr>';
+            
+            // Wiersze z przesunięciami
+            for (let row = 0; row < ALPHABET_SIZE; row++) {
+                const isHighlightedRow = row === step.keyShift;
+                tableHTML += `<tr><th class="row-header ${isHighlightedRow ? 'highlight-row' : ''}">${POLISH_UPPER[row]}</th>`;
+                
+                for (let col = 0; col < ALPHABET_SIZE; col++) {
+                    const shiftedIndex = (col + row) % ALPHABET_SIZE;
+                    const letter = POLISH_UPPER[shiftedIndex];
+                    
+                    // Przecięcie: wiersz klucza + kolumna wyniku = zaszyfrowana litera (original)
+                    const isIntersection = (row === step.keyShift && col === step.newIndex);
+                    const isInHighlightedRow = row === step.keyShift;
+                    const isInHighlightedCol = col === step.newIndex;
+                    
+                    let cellClass = 'table-cell';
+                    if (isIntersection) {
+                        cellClass += ' intersection';
+                    } else if (isInHighlightedRow) {
+                        cellClass += ' in-row';
+                    } else if (isInHighlightedCol) {
+                        cellClass += ' in-col';
+                    }
+                    
+                    tableHTML += `<td class="${cellClass}">${letter}</td>`;
+                }
+                
+                tableHTML += '</tr>';
+            }
+        }
+        
+        tableHTML += '</table></div>';
+        
+        // Legenda
+        tableHTML += `
+            <div class="table-legend">
+                <div class="legend-item">
+                    <span class="legend-color intersection"></span>
+                    <span>Przecięcie (${step.isEncryption ? 'zaszyfrowana' : 'zaszyfrowana (wejście)'})</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color in-row"></span>
+                    <span>Wiersz klucza</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color in-col"></span>
+                    <span>Kolumna ${step.isEncryption ? 'tekstu' : 'wyniku (odszyfrowana)'}</span>
+                </div>
+            </div>
+        `;
+        
+        tableHTML += '</div>';
+        
+        return tableHTML;
+    }
 
 // ===== SZYFRY ==== //
 
@@ -797,6 +1361,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (alphabetRef) {
                 alphabetRef.classList.remove('show');
             }
+            
+            // Ukryj przycisk tabeli substytucji dla wszystkich szyfrów
+            const tableBtn = document.getElementById('show-table-btn');
+            if (tableBtn) {
+                tableBtn.style.display = 'none';
+            }
 
             //Zmiany w html dla wyboru szyfru
             // === SZYFR CEZARA ===
@@ -836,6 +1406,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (alphabetRef) {
                     alphabetRef.classList.add('show');
                 }
+                
                 resetAll();
                 // Inicjalizuj wizualizację dla Vigenère
                 setTimeout(initializeVisualization, 100);
@@ -867,9 +1438,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 
                 if (alphabetRef){
-                    alphabetRef.classList.add('show');
+                    alphabetRef.classList.remove('show');
                 }
-                resetAll(); 
+                resetAll();
+                // Inicjalizuj wizualizację dla płotu
+                setTimeout(initializeVisualization, 100);
             }
 
         });
@@ -922,6 +1495,13 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, true);
+            
+            // Pokaż przycisk tabeli substytucji
+            const tableBtn = document.getElementById('show-table-btn');
+            if (tableBtn) {
+                tableBtn.style.display = 'block';
+            }
+            
             showNotification('Tekst zaszyfrowany szyfrem Vigenère!', 'success');
         }
         //PŁOTOWY
@@ -932,6 +1512,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const result = railFenceEncrypt(input, railsValue);
             outputText.textContent = result || '(brak liter do zaszyfrowania)';
+            
+            // Generuj wizualizację dla szyfru płotowego
+            generateRailFenceVisualizationSteps(input, railsValue, true);
+            
             showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
         }
 
@@ -982,17 +1566,25 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, false);
+            
+            // Pokaż przycisk tabeli substytucji
+            const tableBtn = document.getElementById('show-table-btn');
+            if (tableBtn) {
+                tableBtn.style.display = 'block';
+            }
+            
             showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
         }
 
         //Płotowy
         if (currentCipher === 'railfence') {
-            if (railsValue < 2) { 
-                showNotification('Liczba szyn musi być większa niż 1!', 'warning'); 
-                return; 
-            }
+            if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
             const result = railFenceDecrypt(input, railsValue);
             outputText.textContent = result;
+            
+            // Generuj wizualizację dla deszyfrowania płotowego
+            generateRailFenceVisualizationSteps(input, railsValue, false);
+            
             showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
         }
     });

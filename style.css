@@ -399,6 +399,7 @@ html {
 .viz-progress {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 1rem;
     margin-bottom: 1.5rem;
     padding: 1rem;
@@ -409,6 +410,7 @@ html {
 
 .progress-bar {
     flex: 1;
+    min-width: 200px;
     height: 8px;
     background-color: #e9ecef;
     border-radius: 4px;
@@ -427,6 +429,7 @@ html {
     color: #495057;
     font-weight: 500;
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .current-step {
@@ -434,11 +437,42 @@ html {
     font-weight: bold;
 }
 
+/* Przycisk tabeli substytucji */
+.table-viz-btn {
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    white-space: nowrap;
+    box-shadow: 0 2px 4px rgba(111, 66, 193, 0.3);
+    flex-shrink: 0;
+    margin-left: auto;
+}
+
+.table-viz-btn:hover {
+    background: linear-gradient(135deg, #5a32a3, #4a2889);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(111, 66, 193, 0.4);
+}
+
+.table-viz-btn:active {
+    transform: translateY(0);
+}
+
 /* Obszar wizualizacji */
 .visualization-area {
     min-height: 300px;
     max-height: 550px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     background-color: #ffffff;
     border: 2px solid #e9ecef;
     border-radius: 12px;
@@ -565,12 +599,129 @@ html {
 
 /* Referencja alfabetu */
 .alphabet-reference {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+    border: 2px solid #dee2e6;
+}
+
+/* =====================================================
+   WIZUALIZACJA SZYFRU PŁOTOWEGO
+   ===================================================== */
+
+.rail-fence-grid {
+    display: inline-block;
+    background: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #dee2e6;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rail-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.rail-row:last-child {
+    margin-bottom: 0;
+}
+
+.rail-cell {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.rail-cell:not(.filled) {
+    color: #475569;
+    background: rgba(51, 65, 85, 0.2);
+    border: 1px dashed #475569;
+}
+
+.rail-cell.filled {
+    color: #1976d2;
+    background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+    border: 2px solid #2196f3;
+}
+
+.rail-cell.highlight {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 3px solid #ff9800;
+    color: #e65100;
+    transform: scale(1.15);
+    box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+    animation: railPulse 0.6s ease-in-out;
+}
+
+.rail-cell.read {
+    background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+    border: 2px solid #9c27b0;
+    color: #7b1fa2;
+    opacity: 0.7;
+}
+
+@keyframes railPulse {
+    0%, 100% {
+        transform: scale(1.15);
+        box-shadow: 0 0 20px rgba(255, 152, 0, 0.6);
+    }
+    50% {
+        transform: scale(1.2);
+        box-shadow: 0 0 30px rgba(255, 152, 0, 0.8);
+    }
+}
+
+.rail-number {
+    min-width: 70px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: white;
+    text-align: center;
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    padding: 0.35rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #5a32a3;
+    margin-left: 8px;
+    box-shadow: 0 2px 6px rgba(111, 66, 193, 0.3);
+}
+
+@media (max-width: 768px) {
+    .rail-cell {
+        width: 26px;
+        height: 26px;
+        font-size: 0.875rem;
+    }
+    
+    .rail-fence-grid {
+        padding: 0.75rem;
+    }
+    
+    .rail-number {
+        min-width: 60px;
+        font-size: 0.75rem;
+    }
+}
+
+/* Referencja alfabetu */
+.alphabet-reference {
     margin-top: 0.8rem;
     padding: 0.8rem;
     background-color: #f8f9fa;
     border-radius: 8px;
     border: 1px solid #e9ecef;
     display: none; /* Ukryj domyślnie */
+    max-width: 100%;
 }
 
 .alphabet-reference.show {
@@ -586,23 +737,25 @@ html {
 .alphabet-display {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.3rem;
+    gap: 0.2rem;
+    max-width: 100%;
 }
 
 .alphabet-letter {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
     border: 1px solid #dee2e6;
     border-radius: 6px;
     background-color: #ffffff;
     font-family: 'Courier New', monospace;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     font-weight: 500;
     transition: none;
     will-change: auto;
+    flex-shrink: 0;
 }
 
 /* Podświetlanie alfabetu */
@@ -641,7 +794,7 @@ html {
     background: linear-gradient(135deg, #2196f3, #1976d2) !important;
     color: white !important;
     border-color: #1565c0 !important;
-    transform: scale(1.1);
+    transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
     z-index: 1;
     position: relative;
@@ -651,7 +804,7 @@ html {
     background: linear-gradient(135deg, #9c27b0, #7b1fa2) !important;
     color: white !important;
     border-color: #6a1b9a !important;
-    transform: scale(1.1);
+    transform: scale(1.15);
     box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
     z-index: 1;
     position: relative;
@@ -783,13 +936,13 @@ html {
     }
     
     .alphabet-display, .alphabet-letters {
-        justify-content: center;
+        justify-content: flex-start;
     }
     
     .alphabet-letter {
-        width: 24px;
-        height: 24px;
-        font-size: 0.7rem;
+        width: 22px;
+        height: 22px;
+        font-size: 0.65rem;
     }
     
     .char-display {
@@ -798,7 +951,21 @@ html {
     
     .viz-progress {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 0.8rem;
+        align-items: stretch;
+    }
+    
+    .progress-bar {
+        min-width: 100%;
+    }
+    
+    .step-counter {
+        text-align: center;
+    }
+    
+    .table-viz-btn {
+        width: 100%;
+        justify-content: center;
     }
     
     .alphabet-row {
@@ -810,12 +977,412 @@ html {
 
 @media (max-width: 480px) {
     .visualization-area {
-        padding: 1rem;
+        padding: 0.8rem;
     }
     
     .char-box {
         min-width: 100px;
         padding: 1rem;
+    }
+    
+    .alphabet-letter {
+        width: 20px;
+        height: 20px;
+        font-size: 0.6rem;
+    }
+}
+
+/* =====================================================
+   WIZUALIZACJA TABELOWA VIGENÈRE (TABELA SUBSTYTUCJI) - MODAL
+   ===================================================== */
+
+/* Modal Overlay */
+.table-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Modal Content */
+.table-modal-content {
+    background-color: #ffffff;
+    border-radius: 12px;
+    width: 95vw;
+    max-width: 1400px;
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Header */
+.table-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    border-bottom: 2px solid #e9ecef;
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
+    border-radius: 12px 12px 0 0;
+    flex-wrap: wrap;
+}
+
+.table-modal-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.modal-controls .btn-icon {
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+}
+
+.modal-controls .btn-icon:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-1px);
+}
+
+.modal-step-counter {
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.modal-step-counter span {
+    font-weight: bold;
+}
+
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid white;
+    color: white;
+    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Modal Body */
+.table-modal-body {
+    flex: 1;
+    overflow: hidden;
+    padding: 0.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabula-recta-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-header-info {
+    margin-bottom: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 4px;
+    border: 1px solid #6f42c1;
+    flex-shrink: 0;
+}
+
+.table-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.25rem;
+    text-align: center;
+}
+
+.table-operation {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    font-size: 0.65rem;
+}
+
+.table-operation span {
+    color: #6c757d;
+}
+
+.table-operation strong {
+    color: #6f42c1;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+}
+
+.tabula-recta-scroll {
+    width: 100%;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    background-color: #ffffff;
+    padding: 0;
+    overflow: hidden;
+}
+
+.tabula-recta {
+    border-collapse: collapse;
+    font-family: 'Courier New', monospace;
+    margin: 0 auto;
+    background-color: #ffffff;
+    width: 98%;
+    height: 98%;
+    font-size: clamp(0.45rem, 1vw, 0.65rem);
+    table-layout: fixed;
+}
+
+.tabula-recta th,
+.tabula-recta td {
+    text-align: center;
+    border: 1px solid #e9ecef;
+    padding: 0;
+    transition: all 0.2s ease;
+    width: calc(100% / 36);
+    height: auto;
+    overflow: hidden;
+    line-height: 1;
+}
+
+.corner-cell {
+    background-color: #f8f9fa;
+    border: 2px solid #dee2e6;
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 3;
+}
+
+.header-cell {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.row-header {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    border-right: 2px solid #dee2e6;
+}
+
+.table-cell {
+    background-color: #ffffff;
+    color: #6c757d;
+}
+
+/* Podświetlenia */
+.highlight-col {
+    background: linear-gradient(180deg, #e3f2fd, #bbdefb) !important;
+    color: #1976d2 !important;
+    font-weight: bold;
+    border: 2px solid #2196f3 !important;
+}
+
+.highlight-row {
+    background: linear-gradient(90deg, #f3e5f5, #e1bee7) !important;
+    color: #7b1fa2 !important;
+    font-weight: bold;
+    border: 2px solid #9c27b0 !important;
+}
+
+.in-col {
+    background-color: #e3f2fd !important;
+    color: #1976d2;
+    font-weight: 500;
+}
+
+.in-row {
+    background-color: #f3e5f5 !important;
+    color: #7b1fa2;
+    font-weight: 500;
+}
+
+.intersection {
+    background: linear-gradient(135deg, #ffc107, #ff9800) !important;
+    color: #000000 !important;
+    font-weight: bold;
+    font-size: clamp(0.5rem, 1vw, 0.75rem) !important;
+    border: 2px solid #f57c00 !important;
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.6);
+    z-index: 10;
+    position: relative;
+    animation: pulseIntersection 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseIntersection {
+    0%, 100% {
+        transform: scale(1.15);
+        box-shadow: 0 2px 8px rgba(255, 152, 0, 0.6);
+    }
+    50% {
+        transform: scale(1.25);
+        box-shadow: 0 3px 12px rgba(255, 152, 0, 0.8);
+    }
+}
+
+/* Legenda */
+.table-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    padding: 0.8rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #495057;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #dee2e6;
+}
+
+.legend-color.intersection {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    border: 2px solid #f57c00;
+}
+
+.legend-color.in-row {
+    background-color: #f3e5f5;
+    border: 1px solid #9c27b0;
+}
+
+.legend-color.in-col {
+    background-color: #e3f2fd;
+    border: 1px solid #2196f3;
+}
+
+/* Responsywność dla tabeli i modala */
+@media (max-width: 768px) {
+    .table-modal-content {
+        width: 98vw;
+        height: 95vh;
+    }
+    
+    .table-modal-header {
+        padding: 1rem;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .table-modal-header h3 {
+        font-size: 1.1rem;
+        width: 100%;
+        text-align: center;
+    }
+    
+    .modal-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .modal-step-counter {
+        font-size: 0.8rem;
+    }
+    
+    .table-modal-body {
+        padding: 1rem;
+    }
+    
+    .table-operation {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .table-legend {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .table-modal-header h3 {
+        font-size: 1rem;
+    }
+    
+    .modal-close-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 1.5rem;
     }
 }
 
