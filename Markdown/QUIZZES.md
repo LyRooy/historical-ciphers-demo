@@ -16,17 +16,17 @@ D) Wymaga dużej mocy obliczeniowej
 ✅ Poprawna odpowiedź: A
 
 3. W szyfrze Cezara zastosowano przesunięcie o +3. Jak zaszyfruje się litera „A”?
-A) C
+A) A
 B) B
-C) D
-D) Z
+C) C
+D) D
 ✅ Poprawna odpowiedź: C
 
-4. Odszyfruj szyfrogram „KHOOR” przy przesunięciu 3.
+4. Odszyfruj szyfrogram „ĘCIIM” przy przesunięciu 3.
 A) HELLO
-B) WORLD
-C) TEST
-D) BYE
+B) HANNA
+C) MAMMA
+D) TUTTI
 ✅ Poprawna odpowiedź: A
 
 5. Czym różni się szyfr podstawieniowy od transpozycyjnego?
@@ -78,15 +78,15 @@ Te pytania wymagają zrozumienia zasad działania, analizy i praktycznego zastos
 1. Zaszyfruj tekst „ALA MA KOTA” szyfrem Cezara z przesunięciem +5.
 A) FQF RF PTYF
 B) FQF RF PTPY
-C) FQF RF PTPF
+C) DOD PD ŃSYD
 D) DOD PD NRWD
 ✅ Poprawna odpowiedź: C
 
-2. Odszyfruj „YMJ VZNHP GWTBS” przy przesunięciu 5.
-A) THE QUICK BROWN
-B) HELLO WORLD
-C) GOOD NIGHT
-D) SECRET CODE
+2. Odszyfruj „ŃSY TMŚVD HVBIŻ” przy przesunięciu 5.
+A) KOT PIÓRA DRZEW
+B) LAS KWINT DRZWI
+C) DOM KWIAT STÓŁK
+D) SOS MĄDRA PISMO
 ✅ Poprawna odpowiedź: A
 
 3. Zidentyfikuj szyfr: litery są poprzestawiane, ale nie zmienione.
@@ -100,7 +100,7 @@ D) Enigma
 A) VZCFAJQWB
 B) UYTLBFPKZ
 C) VZCFAJQWBM
-D) N/A (zadanie obliczeniowe – do wykonania w aplikacji)
+D) TBRSRZYCO
 ✅ Poprawna odpowiedź: D
 
 5. Vigenère – odszyfruj „DLGCM XYTQ” kluczem „HASLO”.
@@ -118,7 +118,7 @@ D) Nie da się tego zrobić
 ✅ Poprawna odpowiedź: A
 
 7. Rail Fence – dla 3 szyn zaszyfruj „KRYPTOGRAFIA”.
-A) KRGAFYTOARPI
+A) KYTGAIRPORFA
 B) KRYGFATOARPI
 C) KRGAYFTORAPI
 D) KRGAFYTORAPI
