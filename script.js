@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentCipher = null;
     let shiftValue = 3;
     let railsValue = 3;        // szyfr Płotowy
+    let offsetValue = 0;       // offset płotowy
     
     // === STAN SPA I WIZUALIZACJI ===
     let spaState = {
@@ -842,7 +843,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // WIZUALIZACJA SZYFRU PŁOTOWEGO
     // =====================================================
     
-    function generateRailFenceVisualizationSteps(text, rails, isEncryption = true) {
+    function generateRailFenceVisualizationSteps(text, rails,offset=0, isEncryption = true) {
         spaState.visualizationSteps = [];
         
         if (rails <= 1) return;
@@ -858,8 +859,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 Array(textLength).fill(null)
             );
             
-            let row = 0;
-            let direction = 1;
+            let row = offset % rails;
+            let direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
             
             // Wypełniamy płot znakami
             for (let i = 0; i < textLength; i++) {
@@ -875,8 +876,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Generuj kroki wizualizacji
-            row = 0;
-            direction = 1;
+            row = offset % rails;
+            direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
             
             for (let step = 0; step < textLength; step++) {
                 const fenceSnapshot = Array.from({ length: rails }, () => 
@@ -922,8 +923,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Najpierw oblicz długości poszczególnych rzędów
             const lengths = Array(rails).fill(0);
-            let row = 0;
-            let direction = 1;
+            let row = offset % rails;
+            let direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
             
             for (let i = 0; i < textLength; i++) {
                 lengths[row]++;
@@ -948,8 +949,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Stwórz mapę pozycji zygzaka do rzędów
             const zigzagMap = [];
-            row = 0;
-            direction = 1;
+            row = offset % rails;
+            direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
             const railIndices = Array(rails).fill(0);
             
             for (let pos = 0; pos < textLength; pos++) {
@@ -978,8 +979,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 // Określ pozycje kolumn dla każdego rzędu
                 const columnPositions = Array.from({ length: rails }, () => []);
-                let r = 0;
-                let dir = 1;
+                let r = offset % rails;
+                let dir = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
                 
                 for (let pos = 0; pos < textLength; pos++) {
                     columnPositions[r].push(pos);
@@ -1320,64 +1321,82 @@ document.addEventListener('DOMContentLoaded', () => {
 
     //Tydzień 5
     // === POPRAWIONY SZYFR PŁOTOWY (z usuwaniem spacji i znaków specjalnych) ===
-    function railFenceEncrypt(text, rails) {
-        if (rails <= 1) return text;
-        // 1. Usuń wszystko oprócz polskich liter, zachowaj wielkość liter
-        const lettersOnly = [...text].filter(char => 
+    //Aktualizacja o offset
+    function railFenceEncrypt(text, rails, offset = 0) {
+        if (rails <= 1) return text.replace(/\s+/g, '');
+        
+        const lettersOnly = [...text].filter(char =>
             POLISH_LOWER.includes(char) || POLISH_UPPER.includes(char)
         ).join('');
         
         if (lettersOnly.length === 0) return '';
         
         const fence = Array.from({ length: rails }, () => []);
-        let row = 0;
-        let direction = 1; // 1 = w dół, -1 = w górę
         
+        let row = offset % rails;  // startujemy od offsetu
+        
+        let direction = 1;
+
+        // Jeśli startujemy nie od góry/dół, musimy ustalić początkowy kierunek
+        if (row === 0) direction = 1;
+        else if (row === rails - 1) direction = -1;
+        // w przeciwnym razie – idziemy w dół, chyba że jesteśmy blisko dołu
+         
         for (const char of lettersOnly) {
             fence[row].push(char);
+            
+            // zmiana kierunku tylko na końcach
+            if (row === 0) direction = 1;
+            else if (row === rails - 1) direction = -1;
+            
             row += direction;
-            if (row === rails - 1 || row === 0) direction = -direction;
         }
-        return fence.flat().join(''); // bez spacji!
+        return fence.flat().join('');
+    }
+    
+    
+    function railFenceDecrypt(ciphertext, rails, offset = 0) {
+        const length = ciphertext.length;
+        
+        if (length === 0 || rails <= 1) return ciphertext;
+        
+        // 1. Oblicz długość każdego rzędu (z uwzględnieniem offsetu)
+        const lengths = Array(rails).fill(0);
+        let row = offset % rails;
+        let direction = 1;
+        
+        if (row === 0) direction = 1;
+        else if (row === rails - 1) direction = -1;
+        
+        for (let i = 0; i < length; i++) {
+            lengths[row]++;
+            if (row === 0) direction = 1;
+            else if (row === rails - 1) direction = -1;
+            row += direction;
         }
         
-        function railFenceDecrypt(ciphertext, rails) {
-            if (rails <= 1) return ciphertext;
-            
-            const length = ciphertext.length;
-            if (length === 0) return '';
-            
-            // Oblicz długości poszczególnych szyn
-            const lengths = Array(rails).fill(0);
-            let row = 0;
-            let direction = 1;
-            
-            for (let i = 0; i < length; i++) {
-                lengths[row]++;
-                row += direction;
-                if (row === rails - 1 || row === 0) direction = -direction;
-            }
-            
-            // Rozdziel ciphertext na szyny
-            const fence = [];
-            let index = 0;
-            for (let r = 0; r < rails; r++) {
-                fence[r] = ciphertext.slice(index, index + lengths[r]).split('');
-                index += lengths[r];
-            }
-            
-            // Odczytaj w kolejności zapisu
-            let result = '';
-            row = 0;
-            direction = 1;
-            
-            for (let i = 0; i < length; i++) {
-                result += fence[row].shift();
-                row += direction;
-                if (row === rails - 1 || row === 0) direction = -direction;
-            }
-            return result;
+        // 2. Rozdziel tekst na rzędy
+        const fence = [];
+        let index = 0;
+        for (let r = 0; r < rails; r++) {
+            fence[r] = ciphertext.slice(index, index + lengths[r]).split('');
+            index += lengths[r];
         }
+        
+        // 3. Odczytaj po zygzaku zaczynając od offsetu
+        let result = '';
+        row = offset % rails;
+        direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
+        
+        for (let i = 0; i < length; i++) {
+            result += fence[row].shift();
+            if (row === 0) direction = 1;
+            else if (row === rails - 1) direction = -1;
+            row += direction;
+        }
+        
+        return result;
+    }
 
 
 
@@ -1504,6 +1523,11 @@ document.addEventListener('DOMContentLoaded', () => {
                        <input type="range" id="railfence-rails" min="2" max="10" value="3" class="shift-slider">
                        <small class="settings-hint">Min 2, maks 10</small> 
                     </div>
+                    <div class="settings-group">
+                       <label for="railfence-offset">Przesunięcie startowe (offset): <strong id="offset-value">0</strong></label>
+                       <input type="range" id="railfence-offset" min="0" max="9" value="0" class="shift-slider">
+                       <small class="settings-hint">Od którego rzędu zacząć zapis (0 = domyślnie od góry)</small>
+                    </div>
                 `;
                 //Komentarz do ilości szyn:
                 /*
@@ -1514,21 +1538,38 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 const railsSlider = document.getElementById('railfence-rails');
                 const railsDisplay = document.getElementById('rails-value');
+                //zmiana
+                const offsetSlider = document.getElementById('railfence-offset');
+                const offsetDisplay = document.getElementById('offset-value');
                 
-                // Aktualizacja wartości przy przesuwaniu suwaka
+                railsValue = 3;
+                offsetValue = 0;
+
                 railsSlider.addEventListener('input', () => {
                     railsValue = parseInt(railsSlider.value);
                     railsDisplay.textContent = railsValue;
+
+                    // Maksymalny offset = rails - 1
+                    const maxOffset = railsValue -1;
+                    offsetSlider.max = maxOffset;
+
+                    if (offsetValue >= railsValue) {
+                        offsetValue = maxOffset;
+                        offsetSlider.value = offsetValue;
+                        offsetDisplay.textContent = offsetValue;
+                    }
                 });
                 
-                if (alphabetRef){
-                    alphabetRef.classList.remove('show');
-                }
+                offsetSlider.addEventListener('input', () => {
+                    offsetValue = parseInt(offsetSlider.value);
+                    offsetDisplay.textContent = offsetValue;
+                });
+                
+                 
+                if (alphabetRef) alphabetRef.classList.remove('show');
                 resetAll();
-                // Inicjalizuj wizualizację dla płotu
                 setTimeout(initializeVisualization, 100);
             }
-
         });
     });
 
@@ -1594,7 +1635,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showNotification('Liczba szyn musi być większa niż 1!', 'warning'); 
                 return; 
             }
-            const result = railFenceEncrypt(input, railsValue);
+            const result = railFenceEncrypt(input, railsValue,offsetValue);
             outputText.textContent = result || '(brak liter do zaszyfrowania)';
             
             // Generuj wizualizację dla szyfru płotowego
@@ -1663,7 +1704,7 @@ document.addEventListener('DOMContentLoaded', () => {
         //Płotowy
         if (currentCipher === 'railfence') {
             if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
-            const result = railFenceDecrypt(input, railsValue);
+            const result = railFenceDecrypt(input, railsValue,offsetValue);
             outputText.textContent = result;
             
             // Generuj wizualizację dla deszyfrowania płotowego
