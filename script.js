@@ -268,8 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const vizArea = document.querySelector('.visualization-area');
         if (!vizArea) return;
         
-        // NOTE: notifications are now queued; do not remove notifications here
-        // (removing them would break the queue ordering implemented in showNotification)
         
         // Sprawdź czy w Vigenère litery są takie same i pokaż notyfikację
         if (currentCipher === 'vigenere' && step.originalIndex === step.newIndex) {
@@ -843,101 +841,94 @@ document.addEventListener('DOMContentLoaded', () => {
     // WIZUALIZACJA SZYFRU PŁOTOWEGO
     // =====================================================
     
-    function generateRailFenceVisualizationSteps(text, rails,offset=0, isEncryption = true) {
+    function generateRailFenceVisualizationSteps(text, rails, offset = 0, isEncryption = true) {
         spaState.visualizationSteps = [];
-        
+
         if (rails <= 1) return;
-        
+
         // Usuń spacje z tekstu dla wizualizacji
         const originalText = text;
         const cleanText = text.replace(/\s+/g, '');
         const textLength = cleanText.length;
-        
+
+        if (textLength === 0) {
+            spaState.currentStep = 0;
+            updateVisualizationDisplay();
+            return;
+        }
+
         if (isEncryption) {
-            // SZYFROWANIE - umieszczamy litery w zygzaku
-            const fullFence = Array.from({ length: rails }, () => 
-                Array(textLength).fill(null)
-            );
-            
+            // SZYFROWANIE - umieszczamy litery w zygzaku, zaczynając od offsetu
+            const fullFence = Array.from({ length: rails }, () => Array(textLength).fill(null));
+
+            // Wypełniamy płot znakami z uwzględnieniem offsetu
             let row = offset % rails;
             let direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
-            
-            // Wypełniamy płot znakami
+
             for (let i = 0; i < textLength; i++) {
                 fullFence[row][i] = cleanText[i];
-                
+
                 if (row === 0) {
                     direction = 1;
                 } else if (row === rails - 1) {
                     direction = -1;
                 }
-                
+
                 row += direction;
             }
-            
-            // Generuj kroki wizualizacji
-            row = offset % rails;
-            direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
-            
+
+            // Generuj kroki wizualizacji: dla każdego kroku symulujemy zygzak zaczynając od offsetu
             for (let step = 0; step < textLength; step++) {
-                const fenceSnapshot = Array.from({ length: rails }, () => 
-                    Array(textLength).fill(null)
-                );
-                
-                let r = 0;
-                let dir = 1;
+                const fenceSnapshot = Array.from({ length: rails }, () => Array(textLength).fill(null));
+
+                let r = offset % rails;
+                let dir = (r === 0) ? 1 : (r === rails - 1) ? -1 : 1;
+                let lastPlacedRow = r;
+
                 for (let i = 0; i <= step; i++) {
                     fenceSnapshot[r][i] = cleanText[i];
-                    
+                    lastPlacedRow = r;
+
                     if (r === 0) {
                         dir = 1;
                     } else if (r === rails - 1) {
                         dir = -1;
                     }
-                    
                     r += dir;
                 }
-                
+
                 spaState.visualizationSteps.push({
                     stepNumber: step + 1,
-                    currentRail: row,
+                    currentRail: lastPlacedRow,
                     fence: fenceSnapshot,
                     fullFence: fullFence,
                     cleanText: cleanText,
                     originalText: originalText,
                     step: step + 1,
                     isEncryption: true,
-                    description: `Umieszczenie litery '${cleanText[step]}' w rzędzie ${row + 1}`
+                    description: `Umieszczenie litery '${cleanText[step]}' w rzędzie ${lastPlacedRow + 1}`
                 });
-                
-                if (row === 0) {
-                    direction = 1;
-                } else if (row === rails - 1) {
-                    direction = -1;
-                }
-                
-                row += direction;
             }
         } else {
             // DESZYFROWANIE - pokazujemy jak litery pojawiają się w zygzaku (jak odczytujemy)
-            
+
             // Najpierw oblicz długości poszczególnych rzędów
             const lengths = Array(rails).fill(0);
             let row = offset % rails;
             let direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
-            
+
             for (let i = 0; i < textLength; i++) {
                 lengths[row]++;
-                
+
                 if (row === 0) {
                     direction = 1;
                 } else if (row === rails - 1) {
                     direction = -1;
                 }
-                
+
                 row += direction;
             }
-            
+
             // Rozdziel zaszyfrowany tekst na rzędy
             const fence = Array.from({ length: rails }, () => []);
             let index = 0;
@@ -946,13 +937,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     fence[r].push(cleanText[index++]);
                 }
             }
-            
+
             // Stwórz mapę pozycji zygzaka do rzędów
             const zigzagMap = [];
             row = offset % rails;
             direction = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
             const railIndices = Array(rails).fill(0);
-            
+
             for (let pos = 0; pos < textLength; pos++) {
                 zigzagMap.push({
                     rail: row,
@@ -960,31 +951,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     char: fence[row][railIndices[row]]
                 });
                 railIndices[row]++;
-                
+
                 if (row === 0) {
                     direction = 1;
                 } else if (row === rails - 1) {
                     direction = -1;
                 }
-                
+
                 row += direction;
             }
-            
+
             // Generuj kroki - pokazujemy jak kolejne litery pojawiają się w płocie
             for (let step = 0; step < textLength; step++) {
                 // Stwórz płot pokazujący tylko litery do tej pory
-                const progressFence = Array.from({ length: rails }, () => 
-                    Array(textLength).fill(null)
-                );
-                
-                // Określ pozycje kolumn dla każdego rzędu
+                const progressFence = Array.from({ length: rails }, () => Array(textLength).fill(null));
+
+                // Określ pozycje kolumn dla każdego rzędu (z uwzględnieniem offsetu)
                 const columnPositions = Array.from({ length: rails }, () => []);
                 let r = offset % rails;
-                let dir = (row === 0) ? 1 : (row === rails - 1) ? -1 : 1;
-                
+                let dir = (r === 0) ? 1 : (r === rails - 1) ? -1 : 1;
+
                 for (let pos = 0; pos < textLength; pos++) {
                     columnPositions[r].push(pos);
-                    
+
                     if (r === 0) {
                         dir = 1;
                     } else if (r === rails - 1) {
@@ -992,16 +981,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     r += dir;
                 }
-                
+
                 // Wypełnij płot literami do obecnego kroku
                 for (let i = 0; i <= step; i++) {
                     const pos = zigzagMap[i];
                     const colPos = columnPositions[pos.rail][pos.railIndex];
                     progressFence[pos.rail][colPos] = pos.char;
                 }
-                
+
                 const currentPos = zigzagMap[step];
-                
+
                 spaState.visualizationSteps.push({
                     stepNumber: step + 1,
                     currentRail: currentPos.rail,
@@ -1016,7 +1005,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
         }
-        
+
         spaState.currentStep = 0;
         updateVisualizationDisplay();
     }
@@ -1638,8 +1627,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = railFenceEncrypt(input, railsValue,offsetValue);
             outputText.textContent = result || '(brak liter do zaszyfrowania)';
             
-            // Generuj wizualizację dla szyfru płotowego
-            generateRailFenceVisualizationSteps(input, railsValue, true);
+            // Generuj wizualizację dla szyfru płotowego (uwzględnia offset)
+            generateRailFenceVisualizationSteps(input, railsValue, offsetValue, true);
             
             showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
         }
@@ -1707,8 +1696,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = railFenceDecrypt(input, railsValue,offsetValue);
             outputText.textContent = result;
             
-            // Generuj wizualizację dla deszyfrowania płotowego
-            generateRailFenceVisualizationSteps(input, railsValue, false);
+            // Generuj wizualizację dla deszyfrowania płotowego (uwzględnia offset)
+            generateRailFenceVisualizationSteps(input, railsValue, offsetValue, false);
             
             showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
         }
