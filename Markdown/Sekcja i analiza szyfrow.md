@@ -1,4 +1,4 @@
-## 1. Na czym polega analiza częstości?
+1. Na czym polega analiza częstości?
 
 Analiza częstości polega na sprawdzaniu, jak często występują litery i
 ich kombinacje w szyfrogramie, a potem porównaniu tego z typowymi
@@ -21,66 +21,66 @@ nieznanej długości mocno zaciera statystyki), a zupełnie bezużyteczna
 jest przy szyfrach typu Enigma czy nowoczesnych, gdzie struktura języka
 zostaje kompletnie ukryta.
 
-## 2. Słabości szyfru Cezara
+2. Słabości szyfru Cezara
 
 **Typ:** prosty szyfr podstawieniowy z jednym przesunięciem.
 
-### Dlaczego łatwo go złamać?
+ Dlaczego łatwo go złamać?
 
 -   Zachowuje częstości liter.
 -   Klucz ma małą przestrzeń (kilkadziesiąt możliwych przesunięć).
 
-### Typowe ataki:
+Typowe ataki:
 
 -   Atak brute force.
 -   Analiza częstości.
 
-## 3. Słabości szyfru Vigenère'a
+3. Słabości szyfru Vigenère'a
 
 **Typ:** szyfr polialfabetyczny.
 
-### Dlaczego jest słaby?
+Dlaczego jest słaby?
 
 -   Powtarzający się klucz tworzy okresowość.
 -   Po ustaleniu długości klucza szyfr redukuje się do kilku szyfrów
     Cezara.
 
-### Typowe metody łamania:
+Typowe metody łamania:
 
 -   Test Kasiski.
 -   Indeks koincydencji.
 -   Analiza częstości na kolumnach odpowiadających kolejnym literom
     klucza.
 
-## 4. Słabości szyfru płotowego 
+4. Słabości szyfru płotowego 
 
 **Typ:** szyfr transpozycyjny.
 
-### Dlaczego jest słaby?
+Dlaczego jest słaby?
 
 -   Nie zmienia częstości liter.
 -   Klucz (liczba szyn) można brute-forcować.
 
-### Metody łamania:
+Metody łamania:
 
 -   Brute force liczby poziomów.
 -   Dopasowanie tekstu do wzorca sinusoidalnego.
 
-## 5. Słabości Enigmy
+5. Słabości Enigmy
 
-### Konstrukcyjne słabości:
+Konstrukcyjne słabości:
 
 -   Litera nie może zaszyfrować się w samą siebie.
 -   Deterministyczny ruch rotorów.
 -   Symetryczność szyfrowania i deszyfrowania.
 
-### Słabości praktyczne:
+Słabości praktyczne:
 
 -   Powtarzanie kluczy dziennych.
 -   Procedury operatorów.
 -   Typowe frazy umożliwiające dopasowania (criby).
 
-### Metody łamania:
+Metody łamania:
 
 -   Bomba Turinga.
 -   Analiza cribów.
