@@ -23,7 +23,93 @@ document.addEventListener('DOMContentLoaded', () => {
     let shiftValue = 3;
     let railsValue = 3;        // szyfr Płotowy
     let offsetValue = 0;       // offset płotowy
+
+    // =====================================================
+    // TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
+    // =====================================================
+
+    //Enigma
+    // Automatyczne tworzenie reflektora (symetryczne pary)
+    function generateReflector(ALPH) {
+        let chars = [...ALPH];
+        let result = Array(ALPH.length);
+        let remaining = [...chars];
+
+        while (remaining.length > 1) {
+            let a = remaining.shift();
+            let b = remaining.pop();
+            let ia = ALPH.indexOf(a);
+            let ib = ALPH.indexOf(b);
+            result[ia] = b;
+            result[ib] = a;
+        }
+        
+        // jeśli alfabet nieparzysty → ostatni znak odbija się sam
+        if (remaining.length === 1) {
+            let x = remaining[0];
+            let ix = ALPH.indexOf(x);
+            result[ix] = x;
+        }
+        
+        return result.join('');
+    }
     
+    const REFLECTOR = generateReflector(POLISH_LOWER);  //Sprawia że szyfrowanie jest odwracalne
+
+    //Generuje losowe rotory (Zwróci bład odwracalnośi)
+    /*function generateRotor(alphabet) {
+        const arr = [...alphabet];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]]; // tasowanie Fisher-Yates
+            }
+            return arr.join('');
+        }
+        
+        // Przykład: wygeneruj 3 rotory
+        const ROTORS = [
+            generateRotor(POLISH_LOWER),
+            generateRotor(POLISH_LOWER),
+            generateRotor(POLISH_LOWER)
+        ];
+        
+        console.log("ROTORY:", ROTORS);
+        */
+
+    
+    // Przykładowe 3 rotory (bijekcje)
+    const ROTORS = [
+        "ąbcćdeęfghijklłmnńoópqrsśtuvwxyzźża",
+        "bcćdeęfghijklłmnńoópqrsśtuvwxyzźżaą",
+        "cćdeęfghijklłmnńoópqrsśtuvwxyzźżaąb"
+    ];
+    
+
+    function idx(ch) { return POLISH_LOWER.indexOf(ch); }  //ETW (rotor wstępny) nieruchomy w enigmie
+    
+    // --- rotor przód ---
+    function rotorForward(i, rotor, pos) {
+        let stepped = (i + pos) % ALPHABET_SIZE;
+        return idx(rotor[stepped]);
+    }
+    
+    // --- rotor tył ---
+    function rotorBackward(i, rotor, pos) {
+        let steppedChar = POLISH_LOWER[(i + pos) % ALPHABET_SIZE];
+        let encodedIndex = rotor.indexOf(steppedChar);
+        return (encodedIndex - pos + ALPHABET_SIZE) % ALPHABET_SIZE;
+    }
+    
+    //Konwersja liter na pozycje rotora
+    function letterToRotorPos(ch) {
+        return POLISH_UPPER.indexOf(ch.toUpperCase());
+    }
+
+    //Konwersja pozycji na litery
+    function rotorPosToLetter(pos) {
+        return POLISH_UPPER[pos];
+    }
+
     // === STAN SPA I WIZUALIZACJI ===
     let spaState = {
         currentSection: 'home',
@@ -1388,6 +1474,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    //Tydzien 6
+    // ENIGMA // 
+    // GŁÓWNA FUNKCJA ENIGMY
+    function enigmaRun(text, rotorOrder, rotorPositions) {
+
+        text = text.replace(/\s+/g, '');  // usuń wszystkie spacje
+
+        let pos = [...rotorPositions]; // NIE MODYFIKUJ INPUTU
+         
+        let result = "";
+        
+        for (let ch of text) {
+            let isUpper = POLISH_UPPER.includes(ch);
+            if (isUpper) ch = ch.toLowerCase();
+            
+            let i = idx(ch);
+            
+            if (i === -1) {
+                result += isUpper ? ch.toUpperCase() : ch;
+                continue;
+            }
+            
+            // ROTOR STEP (dokładnie jak w prawdziwej Enigmie)
+            pos[0] = (pos[0] + 1) % ALPHABET_SIZE;
+            if (pos[0] === 0) pos[1] = (pos[1] + 1) % ALPHABET_SIZE;
+            if (pos[1] === 0) pos[2] = (pos[2] + 1) % ALPHABET_SIZE;
+            
+            // ETW = alfabet
+            i = idx(POLISH_LOWER[i]);  //ETW (rotor wstępny) nieruchomy w enigmie
+             
+            // ROTORY PRZÓD
+            for (let r = 0; r < 3; r++) {
+                i = rotorForward(i, ROTORS[rotorOrder[r]], pos[r]);
+            }
+            
+            // REFLEKTOR
+            i = idx(REFLECTOR[i]);
+            
+            // ROTORY TYŁ
+            for (let r = 2; r >= 0; r--) {
+                i = rotorBackward(i, ROTORS[rotorOrder[r]], pos[r]);
+            }
+            
+            let out = POLISH_LOWER[i];
+            result += isUpper ? out.toUpperCase() : out.toLowerCase();
+        }
+        
+        return result;
+    }
+    
+    function enigmaEncrypt(text, order, pos) {
+        return enigmaRun(text, order, [...pos]);
+    }
+    
+    function enigmaDecrypt(text, order, pos) {
+        return enigmaRun(text, order, [...pos]);
+    }
+
+
 
     // === AKTUALIZACJA LICZNIKA ZNAKÓW ===
     function updateCharCount() {
@@ -1559,6 +1704,41 @@ document.addEventListener('DOMContentLoaded', () => {
                 resetAll();
                 setTimeout(initializeVisualization, 100);
             }
+
+            // === ENIGMA ===
+            if (currentCipher === 'enigma') {
+                const alphabetOptions = POLISH_UPPER.split('')
+                .map(ch => `<option value="${ch}">${ch}</option>`).join('');
+                
+                settingsGroup.innerHTML = `
+                <label>Ustawienie rotorów:</label>
+                    <div class="rotor-settings">
+                        <select id="r0">${alphabetOptions}</select>
+                        <select id="r1">${alphabetOptions}</select>
+                        <select id="r2">${alphabetOptions}</select>
+                    </div>
+                    
+                <label>Kolejność rotorów:</label>
+                    <div class="rotor-order">
+                        <select id="order0">
+                            <option value="0">I</option>
+                            <option value="1">II</option>
+                            <option value="2">III</option>
+                        </select>
+                        <select id="order1">
+                            <option value="0">I</option>
+                            <option value="1">II</option>
+                            <option value="2">III</option>
+                        </select>
+                        <select id="order2">
+                            <option value="0">I</option>
+                            <option value="1">II</option>
+                            <option value="2">III</option>
+                        </select>
+                    </div>
+                `;
+            }
+
         });
     });
 
@@ -1585,8 +1765,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Generuj wizualizację dla szyfrowania
             generateVisualizationSteps(input, shiftValue, true);
             showNotification('Tekst zaszyfrowany!', 'success');
-        } else {
-            outputText.textContent = '[Inne szyfry w budowie]';
         }
         //Vigenere
         if (currentCipher === 'vigenere') {
@@ -1633,6 +1811,26 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
         }
 
+        //ENIGMA
+        if (currentCipher === 'enigma') {
+            const pos = [
+                letterToRotorPos(document.getElementById('r0').value),
+                letterToRotorPos(document.getElementById('r1').value),
+                letterToRotorPos(document.getElementById('r2').value)
+            ];
+            
+            const order = [
+                parseInt(document.getElementById('order0').value),
+                parseInt(document.getElementById('order1').value),
+                parseInt(document.getElementById('order2').value),
+            ];
+            
+            const result = enigmaEncrypt(input, order, [...pos]);
+            outputText.textContent = result;
+            showNotification('Tekst zaszyfrowany Enigmą!', 'success');
+        }
+
+
     });
 
     // === ODSZYFROWANIE ===
@@ -1656,8 +1854,6 @@ document.addEventListener('DOMContentLoaded', () => {
             // Generuj wizualizację dla deszyfrowania (z ujemnym przesunięciem)
             generateVisualizationSteps(input, -shiftValue, false);
             showNotification('Tekst odszyfrowany!', 'success');
-        } else {
-            outputText.textContent = '[Inne szyfry w budowie]';
         }
         //Vigenere
         if (currentCipher === 'vigenere') {
@@ -1701,6 +1897,26 @@ document.addEventListener('DOMContentLoaded', () => {
             
             showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
         }
+
+        //Enigma
+        if (currentCipher === 'enigma') {
+            const pos = [
+                letterToRotorPos(document.getElementById('r0').value),
+                letterToRotorPos(document.getElementById('r1').value),
+                letterToRotorPos(document.getElementById('r2').value)
+            ];
+            
+            const order = [
+                parseInt(document.getElementById('order0').value),
+                parseInt(document.getElementById('order1').value),
+                parseInt(document.getElementById('order2').value),
+            ];
+            
+            const result = enigmaDecrypt(input, order, [...pos]);
+            outputText.textContent = result;
+            showNotification('Tekst odszyfrowany Enigmą!', 'success');
+        }
+
     });
 
     // === KOPIOWANIE ===
@@ -1751,6 +1967,106 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeSPA();
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
+
+    //Testowanie alfabetu
+    setTimeout(() => {
+    console.log("=== DIAGNOSTYKA ALFABETU ===");
+
+    console.log("Długość POLISH_LOWER:", POLISH_LOWER.length);
+    console.log("Znaki alfabetu z kodami Unicode:");
+    for (let ch of POLISH_LOWER) {
+        console.log(ch, "→", ch.codePointAt(0).toString(16));
+    }
+
+    console.log("=== KONIEC DIAGNOSTYKI ===");
+}, 500);
+
+
+    //TESTOWANIE ENIGMY//
+    // ============================================================
+//                 ENIGMA SELF-TEST / DIAGNOSTYKA
+// ============================================================
+function enigmaSelfTest() {
+
+    console.log("=== ENIGMA TEST START ===");
+
+    // --- 1. Test reflektora ---
+    for (let i = 0; i < ALPHABET_SIZE; i++) {
+        let a = POLISH_LOWER[i];
+        let b = REFLECTOR[i];
+        let ib = POLISH_LOWER.indexOf(b);
+
+        if (REFLECTOR[ib] !== a) {
+            console.error("❌ Reflektor nie jest symetryczny dla:", a, "<->", b);
+            return false;
+        }
+    }
+    console.log("✔ Reflektor poprawny (symetryczny).");
+
+
+    // --- 2. Test rotory są bijekcjami ---
+    for (let r = 0; r < ROTORS.length; r++) {
+        let rotor = ROTORS[r];
+        let set = new Set(rotor.split(""));
+        if (set.size !== ALPHABET_SIZE) {
+            console.error(`❌ Rotor ${r} nie jest bijekcją!`, rotor);
+            return false;
+        }
+    }
+    console.log("✔ Wszystkie rotory bijekcyjne.");
+
+
+    // --- 3. Test jednego pełnego szyfrowania-deszyfrowania ---
+    const tests = ["test", "litwa", "żółć", "enigma", "ąćęłńóśźż"];
+
+    for (let t of tests) {
+        const pos = [0, 0, 0];      // A A A
+        const order = [0, 1, 2];    // I II III
+
+        const encrypted = enigmaRun(t, order, [...pos]);
+        const decrypted = enigmaRun(encrypted, order, [...pos]);
+
+        if (decrypted !== t) {
+            console.error("❌ BŁĄD ODWARACALNOŚCI:", { t, encrypted, decrypted });
+            return false;
+        }
+    }
+
+    console.log("✔ Enigma przechodzi test odwracalności.");
+
+
+    // --- 4. Test losowych pozycji rotorów ---
+    for (let p0 = 0; p0 < 5; p0++) {
+        for (let p1 = 0; p1 < 5; p1++) {
+            for (let p2 = 0; p2 < 5; p2++) {
+
+                const pos = [p0, p1, p2];
+                const text = "abcżźćńó";
+
+                const encrypted = enigmaRun(text, [0,1,2], [...pos]);
+                const decrypted = enigmaRun(encrypted, [0,1,2], [...pos]);
+
+                if (decrypted !== text) {
+                    console.error("❌ BŁĄD: nie działa dla pozycji:", pos, 
+                                  "wynik:", decrypted);
+                    return false;
+                }
+            }
+        }
+    }
+
+    console.log("✔ Test pozycji rotorów OK.");
+
+    console.log("=== ENIGMA TEST PASSED ===");
+    return true;
+}
+
+// Automatyczne wykonanie testu po załadowaniu
+setTimeout(() => {
+    console.warn(">>> URUCHAMIAM TEST ENIGMY...");
+    enigmaSelfTest();
+}, 1000);
+
 
 
     
