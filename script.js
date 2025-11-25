@@ -25,6 +25,31 @@ document.addEventListener('DOMContentLoaded', () => {
     let offsetValue = 0;       // offset płotowy
 
     // =====================================================
+    // TYDZIEŃ 7: Testowanie aplikacji, Sanityzacja
+    // =====================================================
+
+    // Funkcja sanityzująca i walidująca tekst wejściowy
+    function sanitizeInput(text) {
+        // Usuwamy wszystko poza literami i spacjami
+        const validChars = POLISH_LOWER + POLISH_UPPER + ' ';
+        let sanitized = '';
+        for (let ch of text) {
+            if (validChars.includes(ch)) {
+                sanitized += ch;
+            }
+        }
+        return sanitized;
+    }
+    
+    // Funkcja do zabezpieczenia przed XSS przy wyświetlaniu wyniku
+    function safeOutput(text) {
+        // Zwraca tylko textContent zamiast innerHTML
+        const div = document.createElement('div');
+        div.textContent = text; 
+        return div.textContent;
+    }
+
+    // =====================================================
     // TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
     // =====================================================
 
@@ -1638,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <small class="settings-hint">Tylko polskie litery będą brane pod uwagę</small>
                     </div>
                 `;
+                
 
                 // Pokaż alfabet (przyda się użytkownikowi)
                 if (alphabetRef) {
@@ -1751,16 +1777,20 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Wybierz szyfr!', 'warning');
             return;
         }
-        const input = inputTextarea.value.trim();
+
+        // Pobranie i sanityzacja wejścia
+        let input = inputTextarea.value.trim();
+        input = sanitizeInput(input);
         if (!input) {
-            outputText.textContent = 'Wprowadź tekst!';
-            showNotification('Wprowadź tekst!', 'warning');
+            outputText.textContent = 'Wprowadź poprawny tekst (tylko litery i spacje)!';
+            showNotification('Niepoprawny tekst!', 'warning');
             return;
         }
+
         //Cezar
         if (currentCipher === 'caesar') {
             const result = caesarCipher(input, shiftValue, true);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result);  //sanityzacja wyjścia
             
             // Generuj wizualizację dla szyfrowania
             generateVisualizationSteps(input, shiftValue, true);
@@ -1782,8 +1812,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            const result = vigenereCipher(input, keyword, true);
-            outputText.textContent = result;
+            const result = vigenereCipher(input, keyword, true); 
+            outputText.textContent = safeOutput(result); //sanityzacja wyjścia
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, true);
@@ -1803,7 +1833,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; 
             }
             const result = railFenceEncrypt(input, railsValue,offsetValue);
-            outputText.textContent = result || '(brak liter do zaszyfrowania)';
+            outputText.textContent = safeOutput(result); //sanityzacja wyjścia
             
             // Generuj wizualizację dla szyfru płotowego (uwzględnia offset)
             generateRailFenceVisualizationSteps(input, railsValue, offsetValue, true);
@@ -1826,7 +1856,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
             
             const result = enigmaEncrypt(input, order, [...pos]);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result); //sanityzacja wyjścia
             showNotification('Tekst zaszyfrowany Enigmą!', 'success');
         }
 
@@ -1840,16 +1870,19 @@ document.addEventListener('DOMContentLoaded', () => {
             showNotification('Wybierz szyfr!', 'warning');
             return;
         }
-        const input = inputTextarea.value.trim();
+
+        let input = inputTextarea.value.trim();
+        input = sanitizeInput(input);
         if (!input) {
-            outputText.textContent = 'Wprowadź tekst!';
-            showNotification('Wprowadź tekst!', 'warning');
+            outputText.textContent = 'Wprowadź poprawny tekst (tylko litery i spacje)!';
+            showNotification('Niepoprawny tekst!', 'warning');
             return;
         }
+
         //Cezar
         if (currentCipher === 'caesar') {
             const result = caesarCipher(input, shiftValue, false);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result);
             
             // Generuj wizualizację dla deszyfrowania (z ujemnym przesunięciem)
             generateVisualizationSteps(input, -shiftValue, false);
@@ -1872,7 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = vigenereCipher(input, keyword, false);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result);
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, false);
@@ -1890,7 +1923,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentCipher === 'railfence') {
             if (railsValue < 2) { showNotification('Liczba szyn musi być większa niż 1!', 'warning'); return; }
             const result = railFenceDecrypt(input, railsValue,offsetValue);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result);
             
             // Generuj wizualizację dla deszyfrowania płotowego (uwzględnia offset)
             generateRailFenceVisualizationSteps(input, railsValue, offsetValue, false);
@@ -1913,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
             
             const result = enigmaDecrypt(input, order, [...pos]);
-            outputText.textContent = result;
+            outputText.textContent = safeOutput(result);
             showNotification('Tekst odszyfrowany Enigmą!', 'success');
         }
 
@@ -1962,12 +1995,22 @@ document.addEventListener('DOMContentLoaded', () => {
     inputTextarea.placeholder = 'Najpierw wybierz szyfr...';
     
     updateCharCount();
-    
+
+    // Aktualizacja licznika znaków również po sanityzacji
+    inputTextarea.addEventListener('input', () => {
+        let sanitized = sanitizeInput(inputTextarea.value);
+        if (sanitized !== inputTextarea.value) {
+            inputTextarea.value = sanitized;
+            showNotification('Usunięto niepoprawne znaki!', 'info');
+        }
+        updateCharCount();
+    });
     // === INICJALIZACJA ===
     initializeSPA();
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
 
+   /*
     //Testowanie alfabetu
     setTimeout(() => {
     console.log("=== DIAGNOSTYKA ALFABETU ===");
@@ -1980,6 +2023,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     console.log("=== KONIEC DIAGNOSTYKI ===");
 }, 500);
+*/
 
 
     //TESTOWANIE ENIGMY//
