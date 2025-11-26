@@ -172,7 +172,7 @@ Odp.: B
 5. Quiz: Prosty model Enigmy 
 
 Ile kroków wykona rotor po wpisaniu DOG (po jednym kroku na literę)?
-A) 1 · B) 2 · C) 3 · D) 35
+A) 1 · B) 2 · C) 3 · D) 26
 Odp.: C
 
 Co dzieje się po odbiciu od reflektora?
@@ -187,8 +187,8 @@ Co oznacza ustawienie A–A–A?
 A) rotory w pozycji 0 · B) klucz = AAA · C) reflektor wyłączony · D) brak obrotu rotorów
 Odp.: A
 
-Jeśli rotor ma 35 pozycji, po ilu krokach wróci do A?
-A) 34 · B) 25 · C) 24 · D) 35
+Jeśli rotor ma 26 pozycji, po ilu krokach wróci do A?
+A) 25 · B) 1 · C) 24 · D) 26
 Odp.: D
 
 Co robi reflektor?
