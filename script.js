@@ -2010,7 +2010,7 @@ function letterToRotorPos(letter) {
                         <select id="r2">${alphabetOptions}</select>
                     </div>
 
-                <label>Pozycje startowe rotorów ⌖ (Grundstellung):</label>
+                <label>Pozycje startowe rotorów (Grundstellung):</label>
                     <div class="grund-settings">
                         <select id="g0">${alphabetOptions}</select>
                         <select id="g1">${alphabetOptions}</select>
