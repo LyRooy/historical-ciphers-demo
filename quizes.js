@@ -85,11 +85,11 @@ const quizData = {
         ],
 
         "Prosty model Enigmy": [
-            { q: "Ile kroków wykona rotor po wpisaniu DOG?", a: ["1", "2", "3", "35"], c: 2 },
+            { q: "Ile kroków wykona rotor po wpisaniu DOG?", a: ["1", "2", "3", "26"], c: 2 },
             { q: "Co dzieje się po odbiciu od reflektora?", a: ["sygnał wraca", "sygnał się kończy", "zmienia alfabet", "sygnał zostaje skasowany"], c: 0 },
             { q: "Jaka jest funkcja rotorów?", a: ["zamieniają litery na cyfry", "zmieniają drogę sygnału w zależności od pozycji", "trzymają klucz publiczny", "odczytują hasło"], c: 1 },
             { q: "Co oznacza ustawienie A–A–A?", a: ["rotory w pozycji 0", "klucz = AAA", "reflektor wyłączony", "brak obrotu rotorów"], c: 0 },
-            { q: "Jeśli rotor ma 35 pozycji, po ilu krokach wróci do A?", a: ["34", "25", "24", "35"], c: 3 },
+            { q: "Jeśli rotor ma 26 pozycji, po ilu krokach wróci do A?", a: ["25", "1", "24", "26"], c: 3 },
             { q: "Co robi reflektor?", a: ["zatrzymuje sygnał", "odbija go inną drogą", "zamienia sygnał na liczbę", "powiela sygnał"], c: 1 },
             { q: "Czy Enigma szyfruje symetrycznie?", a: ["Tak", "Nie", "Tylko przy reflektorze typu B", "Tylko przy kluczu parzystym"], c: 0 },
             { q: "Co zmienia każdy klawisz?", a: ["ustawienie reflektora", "długość klucza", "pozycję rotorów", "alfabet"], c: 2 },
