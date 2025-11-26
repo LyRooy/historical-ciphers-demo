@@ -49,15 +49,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return div.textContent;
     }
 
-    // =====================================================
-    // TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
-    // =====================================================
-
+    
 // =====================================================
 // TYDZIEŃ 6: WIZUALIZACJA ENIGMY (ULEPSZONA)
 // =====================================================
 
-const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 // Konwersja litery (A-Z) → numer 0-25
 function letterToRotorPos(letter) {
@@ -275,6 +271,13 @@ function renderEnigmaVisualizationStep(step) {
         </div>
     `;
 }
+
+// =====================================================
+// TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
+// =====================================================
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 // Reflektor B
 const UKW_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
 
@@ -336,7 +339,9 @@ window.updatePlugboardList = function() {
     }
 }
 
-
+// =====================================================
+// TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
+// =====================================================
     
     // --- BASIC ---
     const A = 'A'.charCodeAt(0);
