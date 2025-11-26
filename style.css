@@ -1807,3 +1807,400 @@ html {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* =============================
+   ULEPSZONA KOMPAKTOWA WIZUALIZACJA ENIGMY (JASNA, KONCENTRYCZNA)
+   ============================= */
+.compact-enigma {
+    padding: 0.5rem !important;
+    background: #ffffff !important; /* Jasne tło, pasujące do reszty app */
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    max-width: 500px; /* Zmniejszony rozmiar dla kompaktowości */
+    margin: 0 auto;
+    border: 1px solid #e0e7ff;
+}
+
+.compact-enigma-flex {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.compact-enigma-circles {
+    background: none;
+    position: relative;
+    width: 220px;
+    height: 220px;
+    max-width: 220px;
+    max-height: 220px;
+    transform: scale(1);  /* Stabilizuje scaling dla liter */
+}
+
+.compact-enigma-rotor-circle {
+    background: transparent !important;
+    border: 3px solid rgba(148, 163, 184, 0.5) !important;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    border-radius: 50%;
+    box-sizing: border-box;  /* Fix overflow liter */
+}
+
+.compact-enigma-rotor-circle:nth-child(1) { /* Zewnętrzny */
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.compact-enigma-rotor-circle:nth-child(2) { /* Środkowy */
+    width: 74%;
+    height: 74%;
+    top: 13%;
+    left: 13%;
+}
+
+.compact-enigma-rotor-circle:nth-child(3) { /* Wewnętrzny */
+    width: 50%;
+    height: 50%;
+    top: 25%;
+    left: 25%;
+}
+.compact-enigma-rotor-label {
+    display: none; /* Ukryj podpisy - kolory są wystarczające */
+}
+
+.rotor-circle-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.45s ease;
+}
+
+/* Rotor 1 (zewnętrzny) - Niebieski */
+.compact-enigma-rotor-circle.ring-1 {
+    border-color: #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.15) !important;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+/* Rotor 2 (środkowy) - Zielony */
+.compact-enigma-rotor-circle.ring-2 {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Rotor 3 (wewnętrzny) - Fioletowy */
+.compact-enigma-rotor-circle.ring-3 {
+    border-color: #a855f7 !important;
+    background: rgba(168, 85, 247, 0.2) !important;
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+.ring-1-letter {
+    color: #1e40af;
+}
+
+.ring-2-letter {
+    color: #047857;
+}
+
+.ring-3-letter {
+    color: #6b21a8;
+}
+
+.compact-enigma-rotor-letter {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 500;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    pointer-events: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+}
+
+.compact-enigma-rotor-letter.active {
+    color: #1d4ed8; /* Ciemniejszy niebieski dla aktywnej */
+    background: #dbeafe;
+    font-weight: 700;
+    border: 1px solid #3b82f6;
+    z-index: 2;
+}
+
+.compact-enigma-rotor-letter.reflected {
+    color: #d97706; /* Pomarańczowy dla odbitej litery (zamiast reflektora) */
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    font-weight: 700;
+    z-index: 3;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); /* Lekki glow */
+}
+
+/* Usunięty reflektor - niepotrzebny */
+
+/* IO (Wejście/Wynik) */
+.compact-enigma-io {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-width: 80px;
+    align-items: flex-start;
+    justify-content: center;
+}
+
+.enigma-io-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 1rem; /* Mniejszy */
+}
+
+.enigma-io-label {
+    font-size: 0.75rem;
+    color: #6b7280;
+    font-weight: 600;
+    min-width: 50px;
+}
+
+.enigma-io-value {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-radius: 6px;
+    padding: 0.1rem 0.4rem;
+    font-weight: 700;
+}
+
+/* Pozycje rotorów */
+.compact-enigma-rotor-positions {
+    margin: 0.4rem 0;
+    padding: 0.2rem 0.4rem;
+    background: #f0f9ff;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #1e40af;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.compact-enigma-pos-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.enigma-rotor-pos {
+    font-family: 'Courier New', monospace;
+    color: #1d4ed8;
+    background: #dbeafe;
+    border-radius: 4px;
+    padding: 0.1rem 0.3rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+}
+
+.enigma-rotor-pos.changed {
+    color: #059669;
+    background: #d1fae5;
+    border: 1px solid #10b981;
+}
+
+.compact-enigma-legend {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: #475569;
+}
+
+.compact-enigma-legend .legend-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+}
+
+.legend-pill {
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+.legend-pill.ring-1 {
+    border-color: #facc15;
+    color: #92400e;
+    background: rgba(250, 204, 21, 0.15);
+}
+
+.legend-pill.ring-2 {
+    border-color: #f87171;
+    color: #7f1d1d;
+    background: rgba(248, 113, 113, 0.15);
+}
+
+.legend-pill.ring-3 {
+    border-color: #a855f7;
+    color: #4c1d95;
+    background: rgba(168, 85, 247, 0.2);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.dot-input {
+    background: #1d4ed8;
+}
+
+.dot-output {
+    background: #10b981;
+}
+
+.dot-reflected {
+    background: #f97316;
+}
+
+.legend-label {
+    font-weight: 500;
+}
+
+.rotor-note {
+    font-size: 0.7rem;
+    color: #64748b;
+    text-align: center;
+}
+
+/* Ścieżka transformacji - w jednej linii, mniejsza */
+.compact-enigma-path {
+    background: #ffffff !important;
+    border: 1px solid #bfdbfe !important;
+    margin-top: 0.5rem;
+    padding: 0.5rem !important;
+    border-radius: 8px;
+    font-size: 0.85rem; /* Mniejszy tekst */
+    display: flex;
+    flex-wrap: nowrap; /* Wymuszenie jednej linii */
+    overflow-x: auto; /* Scroll jeśli za długa */
+    gap: 0.3rem;
+    align-items: center;
+}
+
+.path-steps {
+    display: flex;
+    gap: 0.3rem;
+    align-items: center;
+    white-space: nowrap; /* Bez zawijania */
+}
+
+.path-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    background: #eff6ff;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    transition: all 0.2s;
+    font-size: 0.8rem; /* Mniejszy */
+}
+
+.path-step:hover {
+    transform: translateY(-1px);
+    border-color: #3b82f6;
+    box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
+}
+
+.path-stage-name {
+    font-size: 0.6rem;
+    color: #9ca3af;
+    margin-bottom: 0.3rem;
+}
+
+.path-transformation {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.path-letter {
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    padding: 0.15rem 0.3rem;
+    border-radius: 4px;
+}
+
+.path-letter.input {
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+.path-letter.output {
+    color: #059669;
+    background: #d1fae5;
+}
+
+.path-arrow {
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.path-position {
+    font-size: 0.55rem;
+    color: #9ca3af;
+    margin-top: 0.2rem;
+}
+
+/* Responsywność - jeszcze mniejsze na mobile */
+@media (max-width: 600px) {
+    .compact-enigma-circles {
+        width: 180px;
+        height: 180px;
+        max-width: 180px;
+        max-height: 180px;
+    }
+    .compact-enigma-rotor-letter {
+        font-size: 0.65rem;
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* Highlight reflected letter in path */
+.path-letter.reflected {
+    color: #d97706 !important;
+    background: #fef3c7 !important;
+    border: 1px solid #f59e0b !important;
+    font-weight: 700;
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
