@@ -1920,8 +1920,8 @@ html {
     font-size: 0.8rem;
     color: #475569;
     font-weight: 500;
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     background: none;
     display: flex;
@@ -1935,21 +1935,36 @@ html {
     transform-origin: center;
 }
 
-.compact-enigma-rotor-letter.active {
-    color: #1d4ed8; /* Ciemniejszy niebieski dla aktywnej */
-    background: #dbeafe;
+/* hide any leftover ring label spans (defensive) */
+.rotor-ring-label { display: none !important; }
+
+.compact-enigma-rotor-letter.active-input {
+    /* input - bright pink visible on all rotor backgrounds */
+    color: #ffffff; /* white text for max contrast */
+    background: linear-gradient(135deg,#ff4da6,#ff1f84); /* vivid pink gradient */
+    font-weight: 800;
+    border: 2px solid #ff0066; /* strong pink border */
+    z-index: 3;
+    box-shadow: 0 0 10px rgba(255,77,166,0.45), 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.compact-enigma-rotor-letter.active-output {
+    /* output: red */
+    color: #7f1d1d; /* dark red text */
+    background: linear-gradient(135deg,#ffe6e6,#ffd6d6); /* pale red background */
     font-weight: 700;
-    border: 1px solid #3b82f6;
+    border: 1px solid #ef4444; /* red border */
     z-index: 2;
 }
 
 .compact-enigma-rotor-letter.reflected {
-    color: #d97706; /* Pomarańczowy dla odbitej litery (zamiast reflektora) */
-    background: #fef3c7;
+    /* reflected: yellow (ODBICIE) */
+    color: #92400e;
+    background: linear-gradient(135deg,#fff8e1,#fff1b6);
     border: 1px solid #f59e0b;
     font-weight: 700;
     z-index: 3;
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); /* Lekki glow */
+    box-shadow: 0 0 6px rgba(245, 158, 11, 0.25);
 }
 
 /* Usunięty reflektor - niepotrzebny */
@@ -1988,6 +2003,9 @@ html {
     font-weight: 700;
 }
 
+.enigma-io-value.input { color: #ffffff; background: linear-gradient(135deg,#ff5aa6,#ff1f84); border: 1px solid #ff0066; box-shadow: 0 4px 10px rgba(255,77,166,0.18); }
+.enigma-io-value.output { color: #7f1d1d; background: linear-gradient(135deg,#ffe6e6,#ffd6d6); border: 1px solid #ef4444; }
+
 /* Pozycje rotorów */
 .compact-enigma-rotor-positions {
     margin: 0.4rem 0;
@@ -2009,21 +2027,31 @@ html {
 }
 
 .enigma-rotor-pos {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 0.6rem;
+    border-radius: 12px;
     font-family: 'Courier New', monospace;
-    color: #1d4ed8;
-    background: #dbeafe;
-    border-radius: 4px;
-    padding: 0.1rem 0.3rem;
     font-size: 0.95rem;
     font-weight: 700;
-    border: 1px solid #bfdbfe;
+    color: white;
+    margin-right: 0.5rem;
+    border: 2px solid rgba(0,0,0,0.06);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
 .enigma-rotor-pos.changed {
-    color: #059669;
-    background: #d1fae5;
-    border: 1px solid #10b981;
+    transform: scale(1.08);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
 }
+
+/* kolorystyka pigułek pozycji (pasuje do ring-* na kole, ale bardziej kontrastowa) */
+.enigma-rotor-pos.ring-1 { background: linear-gradient(135deg,#1d4ed8,#2563eb); border-color: #1e40af; }
+.enigma-rotor-pos.ring-2 { background: linear-gradient(135deg,#059669,#10b981); border-color: #047857; }
+.enigma-rotor-pos.ring-3 { background: linear-gradient(135deg,#7c3aed,#a855f7); border-color: #6b21a8; }
 
 .compact-enigma-legend {
     margin-top: 0.5rem;
@@ -2046,6 +2074,48 @@ html {
     justify-content: center;
 }
 
+/* Plugboard visualization inside compact enigma panel */
+.compact-enigma-plugboard {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    padding: 0.3rem 0.4rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.plug-pair {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(99,102,241,0.08);
+    color: #1f2937;
+    border: 1px solid rgba(99,102,241,0.16);
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.plug-pair.active {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37,99,235,0.18);
+    background: linear-gradient(135deg,#dbeafe,#c7ddff);
+    border-color: #3b82f6;
+}
+
+/* disable hover visual changes for plug-pair — active pair is explicitly highlighted */
+.plug-pair:hover { transform: none !important; box-shadow: none !important; }
+
+.no-plug {
+    color: #64748b;
+    background: transparent;
+    padding: 0.25rem 0.5rem;
+}
+
 .legend-pill {
     padding: 0.15rem 0.6rem;
     border-radius: 999px;
@@ -2053,23 +2123,9 @@ html {
     border: 1px solid transparent;
 }
 
-.legend-pill.ring-1 {
-    border-color: #facc15;
-    color: #92400e;
-    background: rgba(250, 204, 21, 0.15);
-}
-
-.legend-pill.ring-2 {
-    border-color: #f87171;
-    color: #7f1d1d;
-    background: rgba(248, 113, 113, 0.15);
-}
-
-.legend-pill.ring-3 {
-    border-color: #a855f7;
-    color: #4c1d95;
-    background: rgba(168, 85, 247, 0.2);
-}
+.legend-pill.ring-1 { background: linear-gradient(135deg,#edf6ff,#dbeafe); color: #1e40af; border-color: #3b82f6; }
+.legend-pill.ring-2 { background: linear-gradient(135deg,#f0fff8,#d1fae5); color: #047857; border-color: #10b981; }
+.legend-pill.ring-3 { background: linear-gradient(135deg,#fbf0ff,#f3d9ff); color: #6b21a8; border-color: #a855f7; }
 
 .legend-dot {
     width: 12px;
@@ -2078,17 +2134,13 @@ html {
     display: inline-block;
 }
 
-.dot-input {
-    background: #1d4ed8;
-}
+.legend-dot.dot-input { background: linear-gradient(135deg,#ff5aa6,#ff1f84); }
+.legend-dot.dot-output { background: linear-gradient(135deg,#ffc9c9,#ff8b8b); }
+.legend-dot.dot-reflected { background: linear-gradient(135deg,#ffe28a,#ffd11a); }
 
-.dot-output {
-    background: #10b981;
-}
-
-.dot-reflected {
-    background: #f97316;
-}
+.dot-input { background: #ff7acb; }
+.dot-output { background: #ef4444; }
+.dot-reflected { background: #ffd11a; }
 
 .legend-label {
     font-weight: 500;
@@ -2161,13 +2213,21 @@ html {
 }
 
 .path-letter.input {
-    color: #3b82f6;
-    background: #eff6ff;
+    /* input - high contrast pink */
+    color: #ffffff; /* white text */
+    background: linear-gradient(135deg,#ff5aa6,#ff1f84);
+    border: 1px solid #ff0066;
+    padding: 0.15rem 0.3rem;
+    border-radius: 4px;
+    font-weight: 800;
+    box-shadow: 0 0 6px rgba(255,77,166,0.25);
 }
 
 .path-letter.output {
-    color: #059669;
-    background: #d1fae5;
+    /* output - red */
+    color: #7f1d1d;
+    background: linear-gradient(135deg,#ffe6e6,#ffd6d6);
+    border: 1px solid #ef4444;
 }
 
 .path-arrow {
@@ -2198,9 +2258,24 @@ html {
 
 /* Highlight reflected letter in path */
 .path-letter.reflected {
-    color: #d97706 !important;
-    background: #fef3c7 !important;
+    /* reflected - yellow */
+    color: #92400e !important;
+    background: linear-gradient(135deg,#fff8e1,#fff1b6) !important;
     border: 1px solid #f59e0b !important;
     font-weight: 700;
     box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+/* IO box variants */
+.enigma-io-value.input {
+    color: #ffffff; /* white text for IO box */
+    background: linear-gradient(135deg,#ff5aa6,#ff1f84);
+    border: 1px solid #ff0066;
+    box-shadow: 0 4px 10px rgba(255,77,166,0.18);
+}
+
+.enigma-io-value.output {
+    color: #7f1d1d;
+    background: linear-gradient(135deg,#ffe6e6,#ffd6d6);
+    border: 1px solid #ef4444;
 }

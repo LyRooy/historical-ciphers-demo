@@ -52,69 +52,289 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================
     // TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
     // =====================================================
-    const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    
-    // Reflektor B
-    const UKW_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
-    
-    // Rotory I, II, III
-    const ROTOR_I   = "EKMFLGDQVZNTOWYHXUSPAIBRCJ";  // notch Q = 16
-    const ROTOR_II  = "AJDKSIRUXBLHWTMCQGZNPYFVOE";  // notch E = 4
-    const ROTOR_III = "BDFHJLCPRTXVZNYEIWGAKMUSQO";  // notch V = 21
-     
-    const ROTORS = [ROTOR_I, ROTOR_II, ROTOR_III];
-    const NOTCHES = [16, 4, 21];  // 0=A //KABRY
-     
-    const PLUGBOARD = {}; // brak kabli
 
-    window.PLUGBOARD = {};
-    
-    window.addPlugPair = function(a, b) {
-        if (a === b) return alert("Nie można połączyć litery z samą sobą!");
-        if (PLUGBOARD[a] || PLUGBOARD[b])
-            return alert("Litera jest już użyta w innym kablu!");
-        
-        PLUGBOARD[a] = b;
-        PLUGBOARD[b] = a;
-        
-        updatePlugboardList();
-    };
-    
-    window.removePlugPair = function(letter) {
-        const partner = PLUGBOARD[letter];
-        if (!partner) return;
-        
-        delete PLUGBOARD[letter];
-        delete PLUGBOARD[partner];
-        
-        updatePlugboardList();
-    
-    };
-    
-    window.updatePlugboardList = function() {
-        const list = document.getElementById("plugList");
-        list.innerHTML = "";
-        
-        const used = new Set();
-        
+// =====================================================
+// TYDZIEŃ 6: WIZUALIZACJA ENIGMY (ULEPSZONA)
+// =====================================================
+
+const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Konwersja litery (A-Z) → numer 0-25
+function letterToRotorPos(letter) {
+    return ALPHABET.indexOf(letter.toUpperCase());
+}
+
+// Konwersja pozycji rotora → litera z alfabetu Enigmy
+function rotorPosToLetter(pos) {
+    const i = ((pos % ALPHABET.length) + ALPHABET.length) % ALPHABET.length;
+    return ALPHABET[i];
+}
+
+// ===== WIZUALIZACJA ENIGMY =====
+function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPositions = [0,0,0], isEncrypt = true) {
+    // Follow same flow as enigmaEncrypt so visualization matches algorithm output
+    spaState.visualizationSteps = [];
+    let positions = [...initialPositions]; // right, middle, left
+    const rings = [...ringPositions];
+    const cleanInput = input.toUpperCase().replace(/[^A-Z]/g, '');
+    const rotorDisplayNames = ['Rotor 3', 'Rotor 2', 'Rotor 1'];
+    for (let i = 0; i < cleanInput.length; i++) {
+        const ch = cleanInput[i];
+        if (ch === ' ') continue;
+        const positionsBefore = [...positions];
+        // Use the same stepping logic as the real enigma implementation (correct double-stepping)
+        const notchesForOrder = order.map(i => NOTCHES[i]);
+        step(positions, notchesForOrder);
+        const positionsAfter = [...positions];
+
+        let path = [];
+
+        // Apply plugboard on entry
+        const plugIn = PLUGBOARD[ch] || ch;
+        let signal = toNum(plugIn);
+
+        // If plugboard changed letter on entry, show plugboard step first
+        if (plugIn !== ch) {
+            path.push({ stage: 'Plugboard (in)', input: ch, output: plugIn, pos: null, plugPair: [ch, plugIn] });
+        }
+
+        // ETW (entry) - show letter after plugboard mapping
+        path.push({ stage: 'ETW', input: plugIn, output: toChar(signal), pos: null });
+        const rotorWiring = order.map(i => ROTORS[i]);
+        // forward through rotors (right -> left)
+        for (let r = 0; r < 3; r++) {
+            const beforeSignal = signal;
+            signal = forward(signal, rotorWiring[r], positions[r], rings[r]);
+            path.push({ stage: `${rotorDisplayNames[r]} (przód)`, input: toChar(beforeSignal), output: toChar(signal), pos: positions[r], rotorSlot: r });
+        }
+        // Reflektor B
+        const reflected = toNum(UKW_B[signal]);
+        path.push({ stage: 'Odbicie', input: toChar(signal), output: toChar(reflected), pos: null, reflected: true });
+        signal = reflected;
+        // backward through rotors (left -> right)
+        for (let r = 2; r >= 0; r--) {
+            const beforeSignal = signal;
+            signal = backward(signal, rotorWiring[r], positions[r], rings[r]);
+            path.push({ stage: `${rotorDisplayNames[r]} (tył)`, input: toChar(beforeSignal), output: toChar(signal), pos: positions[r], rotorSlot: r });
+        }
+        // plugboard output
+        let outBeforePlug = toChar(signal);
+        let out = PLUGBOARD[outBeforePlug] || outBeforePlug;
+
+        if (out !== outBeforePlug) {
+            path.push({ stage: 'Plugboard (out)', input: outBeforePlug, output: out, pos: null, plugPair: [outBeforePlug, out] });
+        }
+
+        path.push({ stage: 'Wyjście', input: outBeforePlug, output: out, pos: null });
+
+        // include snapshot of current plugboard pairs (unique pairs)
+        const pairs = [];
+        const seen = new Set();
         for (let a in PLUGBOARD) {
             const b = PLUGBOARD[a];
-            if (used.has(a) || used.has(b)) continue;
-            
-            used.add(a);
-            used.add(b);
-            
-            const div = document.createElement("div");
-            div.classList.add("plugItem");
-
-            div.innerHTML = `
-            <span>${a} ↔ ${b}</span>
-            <button onclick="removePlugPair('${a}')">X</button>
-            `;
-
-            list.appendChild(div);
+            if (seen.has(a) || seen.has(b)) continue;
+            seen.add(a); seen.add(b);
+            pairs.push([a, b]);
         }
-    };
+
+        spaState.visualizationSteps.push({ inputChar: ch, outputChar: out, positionsBefore, positionsAfter, path: path, plugPairs: pairs });
+    }
+    spaState.totalSteps = spaState.visualizationSteps.length;
+    spaState.currentStep = 0;
+    updateVisualizationDisplay();
+}
+
+function renderEnigmaVisualizationStep(step) {
+    if (typeof step !== 'object' || !step.path) return '';
+
+    // Dostosowana, kompaktowa wizualizacja Enigmy (po wzorze z wersji polskiej)
+    const alphabetLen = ALPHABET.length; // powinno być 26 dla Enigmy
+    const stepAngle = 360 / alphabetLen;
+
+    const circleSizes = [100, 74, 50];
+    const circleOffsets = [0, 13, 25];
+    const letterRadii = [98, 70, 44];
+    // slightly smaller font sizes to reduce overlap on compact wheel
+    const letterFontSizes = ['0.85rem', '0.75rem', '0.65rem'];
+    const ringConfigs = [
+        { ringIndex: 0, slot: 2, label: 'R1', className: 'ring-1' },
+        { ringIndex: 1, slot: 1, label: 'R2', className: 'ring-2' },
+        { ringIndex: 2, slot: 0, label: 'R3', className: 'ring-3' }
+    ];
+
+    const circles = ringConfigs.map(cfg => {
+        const pos = step.positionsAfter[cfg.slot] ?? 0;
+        const prevPos = step.positionsBefore[cfg.slot];
+        const rotated = typeof prevPos === 'number' ? pos !== prevPos : false;
+        const rotationDeg = -(pos * stepAngle);
+        const circleStyle = `width: ${circleSizes[cfg.ringIndex]}%; height: ${circleSizes[cfg.ringIndex]}%; top: ${circleOffsets[cfg.ringIndex]}%; left: ${circleOffsets[cfg.ringIndex]}%;`;
+
+        return `
+            <div class="compact-enigma-rotor-circle ${cfg.className} ${rotated ? 'rotor-rotated' : ''}" style="z-index: ${3 - cfg.ringIndex}; ${circleStyle}">
+                <!-- rotor label intentionally omitted (use color and legend instead) -->
+                <div class="rotor-circle-inner" style="transform: rotate(${rotationDeg}deg);">
+                    ${ALPHABET.split('').map((letter, i) => {
+                        let classes = 'compact-enigma-rotor-letter ' + cfg.className + '-letter';
+
+                        // mark whether this letter appears as an input or output at this rotor
+                        const isInputActive = step.path.some(p => p.rotorSlot === cfg.slot && p.input === letter);
+                        const isOutputActive = step.path.some(p => p.rotorSlot === cfg.slot && p.output === letter);
+                        if (isInputActive) classes += ' active-input';
+                        if (isOutputActive) classes += ' active-output';
+                        const reflected = step.path.some(p => p.reflected && (p.input === letter || p.output === letter));
+                        if (reflected) classes += ' reflected';
+
+                        const radius = letterRadii[cfg.ringIndex];
+                        const fontSize = letterFontSizes[cfg.ringIndex];
+                        const angle = i * stepAngle;
+
+                        return `<span class="${classes}" style="font-size: ${fontSize}; transform: translate(-50%, -50%) rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg);">${letter}</span>`;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const positionsDisplay = [
+        { slot: 2, label: 'R1', className: 'ring-1' },
+        { slot: 1, label: 'R2', className: 'ring-2' },
+        { slot: 0, label: 'R3', className: 'ring-3' }
+    ].map(cfg => {
+        const currentPos = step.positionsAfter[cfg.slot] ?? 0;
+        const prevPos = step.positionsBefore[cfg.slot];
+        const changed = typeof prevPos === 'number' ? currentPos !== prevPos : false;
+        // pokaż tylko kolorowaną "pigułkę" z literą pozycji
+        return `
+            <span class="enigma-rotor-pos ${cfg.className || ''} ${changed ? 'changed' : ''}" title="${cfg.label}">
+                ${rotorPosToLetter(currentPos)}
+            </span>
+        `;
+    }).join('');
+
+    // render plugboard pairs (unique) and highlight if used in current path
+    const plugboardHTML = (step.plugPairs && step.plugPairs.length) ?
+        `<div class="compact-enigma-plugboard">${step.plugPairs.map(p => {
+            const used = step.path.some(s => s.plugPair && ((s.plugPair[0] === p[0] && s.plugPair[1] === p[1]) || (s.plugPair[0] === p[1] && s.plugPair[1] === p[0])));
+            return `<span class="plug-pair ${used ? 'active' : ''}" data-a="${p[0]}" data-b="${p[1]}">${p[0]} ↔ ${p[1]}</span>`;
+        }).join('')}</div>` : `<div class="compact-enigma-plugboard"><span class="no-plug">Brak połączeń</span></div>`;
+
+    const legend = `
+        <div class="compact-enigma-legend">
+            ${plugboardHTML}
+            <div class="legend-row">
+                <span class="legend-pill ring ring-1">R1</span>
+                <span class="legend-pill ring ring-2">R2</span>
+                <span class="legend-pill ring ring-3">R3</span>
+            </div>
+            <div class="legend-row">
+                <span class="legend-dot dot-input"></span><span class="legend-label">Różowy – litera aktualnie wchodząca</span>
+                <span class="legend-dot dot-output"></span><span class="legend-label">Czerwona – litera wychodząca</span>
+                <span class="legend-dot dot-reflected"></span><span class="legend-label">Żółta – odbicie w reflektorze</span>
+            </div>
+            <p class="rotor-note">Każdy kolejny rotor obraca się dopiero po pełnym obrocie poprzedniego (${alphabetLen} liter).</p>
+        </div>
+    `;
+
+    const pathSteps = step.path.map(p => `
+        <div class="path-step">
+            <div class="path-stage-name">${p.stage}</div>
+            <div class="path-transformation">
+                <span class="path-letter input ${p.reflected ? 'reflected' : ''}">${p.input}</span>
+                <span class="path-arrow">→</span>
+                <span class="path-letter output ${p.reflected ? 'reflected' : ''}">${p.output}</span>
+            </div>
+            ${p.pos !== undefined && p.pos !== null ? `<div class="path-position">Pos: ${rotorPosToLetter(p.pos)}</div>` : ''}
+        </div>
+    `).join('');
+
+    return `
+        <div class="compact-enigma">
+            <div class="compact-enigma-flex">
+                <div class="compact-enigma-circles">
+                    ${circles}
+                </div>
+                <div class="compact-enigma-io">
+                    <div class="enigma-io-row"><span class="enigma-io-label">Wejście:</span><span class="enigma-io-value input">${step.inputChar}</span></div>
+                        <div class="enigma-io-row"><span class="enigma-io-label">Wynik:</span><span class="enigma-io-value output">${step.outputChar}</span></div>
+                </div>
+            </div>
+            
+            <div class="compact-enigma-rotor-positions">
+                <div class="compact-enigma-pos-row">
+                    ${positionsDisplay}
+                </div>
+            </div>
+            
+            ${legend}
+            
+            <div class="compact-enigma-path">
+                <div class="path-steps">
+                    ${pathSteps}
+                </div>
+            </div>
+        </div>
+    `;
+}
+// Reflektor B
+const UKW_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
+
+// Rotory I, II, III
+const ROTOR_I   = "EKMFLGDQVZNTOWYHXUSPAIBRCJ";  // notch Q = 16
+const ROTOR_II  = "AJDKSIRUXBLHWTMCQGZNPYFVOE";  // notch E = 4
+const ROTOR_III = "BDFHJLCPRTXVZNYEIWGAKMUSQO";  // notch V = 21
+
+const ROTORS = [ROTOR_I, ROTOR_II, ROTOR_III];
+const NOTCHES = [16, 4, 21];  // 0=A //KABRY
+
+let PLUGBOARD = {}; // brak kabli
+
+window.PLUGBOARD = PLUGBOARD;
+
+window.addPlugPair = function(a, b) {
+    if (a === b) return alert("Nie można połączyć litery z samą sobą!");
+    if (PLUGBOARD[a] || PLUGBOARD[b])
+        return alert("Litera jest już użyta w innym kablu!");
+
+    PLUGBOARD[a] = b;
+    PLUGBOARD[b] = a;
+
+    updatePlugboardList();
+};
+
+window.removePlugPair = function(letter) {
+    const partner = PLUGBOARD[letter];
+    if (!partner) return;
+
+    delete PLUGBOARD[letter];
+    delete PLUGBOARD[partner];
+
+    updatePlugboardList();
+};
+
+window.updatePlugboardList = function() {
+    const list = document.getElementById("plugList");
+    list.innerHTML = "";
+
+    const used = new Set();
+
+    for (let a in PLUGBOARD) {
+        const b = PLUGBOARD[a];
+        if (used.has(a) || used.has(b)) continue;
+
+        used.add(a);
+        used.add(b);
+
+        const div = document.createElement("div");
+        div.classList.add("plugItem");
+
+        div.innerHTML = `
+        <span>${a} ↔ ${b}</span>
+        <button onclick="removePlugPair('${a}')">X</button>
+        `;
+
+        list.appendChild(div);
+    }
+}
 
 
     
@@ -1785,7 +2005,7 @@ function letterToRotorPos(letter) {
                         <select id="r2">${alphabetOptions}</select>
                     </div>
 
-                <label>Pozycje startowe rotorów (Grundstellung):</label>
+                <label>Pozycje startowe rotorów ⌖ (Grundstellung):</label>
                     <div class="grund-settings">
                         <select id="g0">${alphabetOptions}</select>
                         <select id="g1">${alphabetOptions}</select>
@@ -1950,6 +2170,14 @@ function letterToRotorPos(letter) {
             );
             
             outputText.textContent = result;
+            // Przygotuj wizualizację Enigmy (konwertuj Grundstellung → numery pozycji)
+            try {
+                const initPos = grundstellung.map(ch => letterToRotorPos(ch));
+                const ringPos = ringstellung.map(ch => letterToRotorPos(ch));
+                generateEnigmaVisualizationSteps(input, order, initPos, ringPos, true);
+            } catch (e) {
+                console.warn('Wizualizacja Enigmy nie powiodła się:', e);
+            }
         }
 
     });
@@ -2051,6 +2279,13 @@ function letterToRotorPos(letter) {
     );
 
     outputText.textContent = result;
+    try {
+        const initPos = grundstellung.map(ch => letterToRotorPos(ch));
+        const ringPos = ringstellung.map(ch => letterToRotorPos(ch));
+        generateEnigmaVisualizationSteps(input, order, initPos, ringPos, false);
+    } catch (e) {
+        console.warn('Wizualizacja Enigmy (odszyfrowanie) nie powiodła się:', e);
+    }
 }
 
     });
