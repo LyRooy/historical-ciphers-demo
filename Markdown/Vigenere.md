@@ -1,6 +1,6 @@
 # Szyfr Vigenère'a --- Dokumentacja użytkownika
 
-## Opis działania
+Opis działania
 
 Szyfr Vigenère'a to metoda szyfrowania, w której każda litera tekstu
 jawnego jest przesuwana o wartość wynikającą z odpowiadającej jej litery
@@ -8,7 +8,7 @@ klucza. Klucz powtarza się cyklicznie, dopasowując długość do tekstu.
 Przesunięcia wynikają z liter klucza: - A = 0 - B = 1 - C = 2 - ... - Z
 = 25
 
-## Klucz
+Klucz
 
 -   Klucz stanowi dowolny ciąg liter, np. TAJNE, KLUCZ, VIGENERE.
 -   Każda litera klucza określa przesunięcie w alfabecie.
@@ -16,14 +16,14 @@ Przesunięcia wynikają z liter klucza: - A = 0 - B = 1 - C = 2 - ... - Z
 -   Do odszyfrowania używa się tego samego klucza, lecz przesunięcia
     wykonuje się w przeciwnym kierunku.
 
-## Zastosowanie
+Zastosowanie
 
 -   Nauka kryptografii.
 -   Ukrywanie treści w ćwiczeniach edukacyjnych.
 -   Eksperymentowanie z alfabetem i zmiennymi przesunięciami.
 -   Prezentacja szyfrowania polialfabetycznego.
 
-## Zasady użytkowania
+Zasady użytkowania
 
 -   Wprowadź tekst do zaszyfrowania lub odszyfrowania.
 -   Podaj klucz składający się z liter.
@@ -32,7 +32,7 @@ Przesunięcia wynikają z liter klucza: - A = 0 - B = 1 - C = 2 - ... - Z
     interpunkcję.
 -   Uruchom proces i odczytaj wynik w polu wyjściowym programu.
 
-## Eksport do pliku tekstowego
+Eksport do pliku tekstowego
 
 -   Skopiuj wynik szyfrowania.
 -   Otwórz Notatnik lub inny edytor tekstu.
@@ -42,7 +42,7 @@ Przesunięcia wynikają z liter klucza: - A = 0 - B = 1 - C = 2 - ... - Z
 -   Ustaw kodowanie UTF‑8.
 -   Zapisz plik.
 
-## Dodatkowe wskazówki
+Dodatkowe wskazówki
 
 -   W aplikacjach można dodać pola: tekst wejściowy, klucz, tryb pracy i
     przycisk „Zapisz wynik".
@@ -50,7 +50,7 @@ Przesunięcia wynikają z liter klucza: - A = 0 - B = 1 - C = 2 - ... - Z
 -   Najwygodniejszym formatem eksportu jest plik .txt.
 -   Klucz powinien składać się wyłącznie z liter.
 
-## Podsumowanie
+Podsumowanie
 
 Szyfr Vigenère'a to prosta i czytelna metoda szyfrowania
 polialfabetycznego. Dzięki możliwości eksportowania wyniku do pliku
