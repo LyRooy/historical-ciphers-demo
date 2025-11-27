@@ -13,14 +13,14 @@ Przykład przy dwóch poziomach:\
 Litery tekstu zapisywane są kolejno „górą" i „dołem", a następnie
 odczytywane wierszami.
 
-## Klucz
+ Klucz
 
 -   Kluczem jest liczba poziomów (szyn), zwykle od 2 wzwyż.\
 -   Większa liczba szyn tworzy bardziej skomplikowany wzór zygzaka.\
 -   Aby odszyfrować wiadomość, należy użyć tej samej liczby poziomów, co
     podczas szyfrowania.
 
-## Zastosowanie
+ Zastosowanie
 
 -   Nauka podstaw szyfrów transpozycyjnych.\
 -   Proste zadania edukacyjne.\
@@ -28,7 +28,7 @@ odczytywane wierszami.
     transpozycyjnym.\
 -   Eksperymenty z liczbą poziomów i strukturą tekstu.
 
-## Zasady użytkowania
+ Zasady użytkowania
 
 -   Wprowadź tekst jawny.\
 -   Podaj liczbę poziomów (szyn), np. 2--10.\
@@ -36,7 +36,7 @@ odczytywane wierszami.
 -   Zdecyduj, czy zachować wielkość liter i znaki interpunkcyjne.\
 -   Uruchom proces i odczytaj wynik w polu wyjściowym programu.
 
-## Eksport do pliku tekstowego
+ Eksport do pliku tekstowego
 
 -   Skopiuj wynik szyfrowania lub odszyfrowania.\
 -   Otwórz Notatnik lub dowolny edytor tekstu.\
@@ -46,7 +46,7 @@ odczytywane wierszami.
 -   Ustaw kodowanie UTF-8.\
 -   Zapisz plik.
 
-## Dodatkowe wskazówki
+ Dodatkowe wskazówki
 
 -   Formularz może zawierać: pole tekstowe, pole liczby poziomów, wybór
     trybu działania oraz przycisk „Zapisz wynik".\
@@ -54,7 +54,7 @@ odczytywane wierszami.
 -   Pliki .txt są najprostszym formatem do udostępniania.\
 -   Liczba szyn nie powinna być większa niż długość tekstu.
 
-## Podsumowanie
+ Podsumowanie
 
 Szyfr płotowy to prosty szyfr transpozycyjny oparty na układaniu tekstu
 w zygzak.\
