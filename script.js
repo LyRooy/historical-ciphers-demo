@@ -291,7 +291,7 @@ function renderEnigmaVisualizationStep(step) {
     // Informacja o mechanizmie obrotów
     const rotationMechanismHTML = `
         <div class="rotation-mechanism-info">
-            <span class="info-text">Rotor III obraca się przy każdym znaku. Rotor II obraca się gdy Rotor III osiąga kabr (⚙). Rotor I obraca się gdy Rotor II osiąga kabr.</span>
+            <span class="info-text">Rotor III obraca się przy każdym znaku. Rotor II obraca się gdy Rotor III osiąga kabr (⚙). Rotor I obraca się gdy Rotor II osiąga kabr (⚙).</span>
         </div>
     `;
 
@@ -2437,3 +2437,4 @@ function letterToRotorPos(letter) {
  
     
 });
+
