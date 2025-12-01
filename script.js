@@ -143,129 +143,193 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
 function renderEnigmaVisualizationStep(step) {
     if (typeof step !== 'object' || !step.path) return '';
 
-    // Dostosowana, kompaktowa wizualizacja Enigmy (po wzorze z wersji polskiej)
-    const alphabetLen = ALPHABET.length; // powinno być 26 dla Enigmy
+    const alphabetLen = ALPHABET.length;
     const stepAngle = 360 / alphabetLen;
-
-    const circleSizes = [100, 74, 50];
-    const circleOffsets = [0, 13, 25];
-    const letterRadii = [98, 70, 44];
-    // slightly smaller font sizes to reduce overlap on compact wheel
-    const letterFontSizes = ['0.85rem', '0.75rem', '0.65rem'];
-    const ringConfigs = [
-        { ringIndex: 0, slot: 2, label: 'R1', className: 'ring-1' },
-        { ringIndex: 1, slot: 1, label: 'R2', className: 'ring-2' },
-        { ringIndex: 2, slot: 0, label: 'R3', className: 'ring-3' }
+    
+    // Konfiguracja 3 oddzielnych rotorów - pozycje względne w kontenerze
+    const rotorConfigs = [
+        { slot: 2, label: 'Rotor I', id: 'rotor-1' },
+        { slot: 1, label: 'Rotor II', id: 'rotor-2' },
+        { slot: 0, label: 'Rotor III', id: 'rotor-3' }
     ];
 
-    const circles = ringConfigs.map(cfg => {
+    // Zbierz informacje o aktywnych literach dla każdego rotora
+    const getActiveLettersForRotor = (rotorSlot) => {
+        const activeLetters = { input: null, output: null };
+        step.path.forEach(p => {
+            if (p.rotorSlot === rotorSlot) {
+                if (!activeLetters.input) activeLetters.input = p.input;
+                activeLetters.output = p.output;
+            }
+        });
+        return activeLetters;
+    };
+
+    // Renderuj 3 oddzielne rotory
+    const rotorsHTML = rotorConfigs.map((cfg, index) => {
         const pos = step.positionsAfter[cfg.slot] ?? 0;
         const prevPos = step.positionsBefore[cfg.slot];
         const rotated = typeof prevPos === 'number' ? pos !== prevPos : false;
         const rotationDeg = -(pos * stepAngle);
-        const circleStyle = `width: ${circleSizes[cfg.ringIndex]}%; height: ${circleSizes[cfg.ringIndex]}%; top: ${circleOffsets[cfg.ringIndex]}%; left: ${circleOffsets[cfg.ringIndex]}%;`;
+        const currentLetter = rotorPosToLetter(pos);
+        const changed = typeof prevPos === 'number' ? pos !== prevPos : false;
+        
+        const activeLetters = getActiveLettersForRotor(cfg.slot);
+        
+        // Określ notch dla tego rotora (cfg.slot odpowiada indeksowi w NOTCHES)
+        const notchPosition = NOTCHES[cfg.slot];
+        const notchLetter = ALPHABET[notchPosition];
 
         return `
-            <div class="compact-enigma-rotor-circle ${cfg.className} ${rotated ? 'rotor-rotated' : ''}" style="z-index: ${3 - cfg.ringIndex}; ${circleStyle}">
-                <!-- rotor label intentionally omitted (use color and legend instead) -->
-                <div class="rotor-circle-inner" style="transform: rotate(${rotationDeg}deg);">
+            <div class="enigma-rotor-container" data-rotor-index="${index}">
+                <div class="enigma-rotor-label">${cfg.label} <span class="rotor-notch-info" title="Kabłąk przy literze ${notchLetter}">(⚙${notchLetter})</span></div>
+                <div class="enigma-rotor-wheel ${rotated ? 'rotor-rotated' : ''}" data-rotor="${index + 1}">
+                    <div class="rotor-inner" style="transform: rotate(${rotationDeg}deg);">
+                        ${ALPHABET.split('').map((letter, i) => {
+                            const angle = i * stepAngle;
+                            // Sprawdź czy to litera po plugboard (ETW output)
+                            const etwStep = step.path.find(p => p.stage === 'ETW');
+                            const pluggedLetter = etwStep ? etwStep.output : step.inputChar;
+                            
+                            const isInputLetter = (letter === pluggedLetter && index === 0);
+                            const isOutputLetter = (letter === step.outputChar && index === 0);
+                            
+                            let letterClass = 'rotor-letter';
+                            if (isInputLetter) letterClass += ' letter-input';
+                            else if (isOutputLetter) letterClass += ' letter-output';
+                            else if (activeLetters.input === letter || activeLetters.output === letter) letterClass += ' letter-active';
+                            
+                            return `<span class="${letterClass}" 
+                                style="transform: translate(-50%, -50%) rotate(${angle}deg) translate(50px) rotate(-${angle}deg);">${letter}</span>`;
+                        }).join('')}
+                    </div>
+                </div>
+                <div class="enigma-rotor-position ${changed ? 'position-changed' : ''}">${currentLetter}</div>
+            </div>
+        `;
+    }).join('');
+
+    // Reflektor (mniejszy) - znajdź litery aktywne w reflektorze
+    const reflectorActiveLetters = step.path.find(p => p.reflected);
+    const reflectorHTML = `
+        <div class="enigma-reflector-container">
+            <div class="enigma-rotor-label">Reflektor B</div>
+            <div class="enigma-reflector-wheel">
+                <div class="reflector-inner">
                     ${ALPHABET.split('').map((letter, i) => {
-                        let classes = 'compact-enigma-rotor-letter ' + cfg.className + '-letter';
-
-                        // mark whether this letter appears as an input or output at this rotor
-                        const isInputActive = step.path.some(p => p.rotorSlot === cfg.slot && p.input === letter);
-                        const isOutputActive = step.path.some(p => p.rotorSlot === cfg.slot && p.output === letter);
-                        if (isInputActive) classes += ' active-input';
-                        if (isOutputActive) classes += ' active-output';
-                        const reflected = step.path.some(p => p.reflected && (p.input === letter || p.output === letter));
-                        if (reflected) classes += ' reflected';
-
-                        const radius = letterRadii[cfg.ringIndex];
-                        const fontSize = letterFontSizes[cfg.ringIndex];
                         const angle = i * stepAngle;
-
-                        return `<span class="${classes}" style="font-size: ${fontSize}; transform: translate(-50%, -50%) rotate(${angle}deg) translate(${radius}px) rotate(-${angle}deg);">${letter}</span>`;
+                        const isActive = reflectorActiveLetters && (reflectorActiveLetters.input === letter || reflectorActiveLetters.output === letter);
+                        return `<span class="reflector-letter ${isActive ? 'letter-reflected' : ''}" 
+                            style="transform: translate(-50%, -50%) rotate(${angle}deg) translate(32px) rotate(-${angle}deg);">${letter}</span>`;
                     }).join('')}
                 </div>
             </div>
-        `;
-    }).join('');
-
-    const positionsDisplay = [
-        { slot: 2, label: 'R1', className: 'ring-1' },
-        { slot: 1, label: 'R2', className: 'ring-2' },
-        { slot: 0, label: 'R3', className: 'ring-3' }
-    ].map(cfg => {
-        const currentPos = step.positionsAfter[cfg.slot] ?? 0;
-        const prevPos = step.positionsBefore[cfg.slot];
-        const changed = typeof prevPos === 'number' ? currentPos !== prevPos : false;
-        // pokaż tylko kolorowaną "pigułkę" z literą pozycji
-        return `
-            <span class="enigma-rotor-pos ${cfg.className || ''} ${changed ? 'changed' : ''}" title="${cfg.label}">
-                ${rotorPosToLetter(currentPos)}
-            </span>
-        `;
-    }).join('');
-
-    // render plugboard pairs (unique) and highlight if used in current path
-    const plugboardHTML = (step.plugPairs && step.plugPairs.length) ?
-        `<div class="compact-enigma-plugboard">${step.plugPairs.map(p => {
-            const used = step.path.some(s => s.plugPair && ((s.plugPair[0] === p[0] && s.plugPair[1] === p[1]) || (s.plugPair[0] === p[1] && s.plugPair[1] === p[0])));
-            return `<span class="plug-pair ${used ? 'active' : ''}" data-a="${p[0]}" data-b="${p[1]}">${p[0]} ↔ ${p[1]}</span>`;
-        }).join('')}</div>` : `<div class="compact-enigma-plugboard"><span class="no-plug">Brak połączeń</span></div>`;
-
-    const legend = `
-        <div class="compact-enigma-legend">
-            ${plugboardHTML}
-            <div class="legend-row">
-                <span class="legend-pill ring ring-1">R1</span>
-                <span class="legend-pill ring ring-2">R2</span>
-                <span class="legend-pill ring ring-3">R3</span>
-            </div>
-            <div class="legend-row">
-                <span class="legend-dot dot-input"></span><span class="legend-label">Różowy – litera aktualnie wchodząca</span>
-                <span class="legend-dot dot-output"></span><span class="legend-label">Czerwona – litera wychodząca</span>
-                <span class="legend-dot dot-reflected"></span><span class="legend-label">Żółta – odbicie w reflektorze</span>
-            </div>
-            <p class="rotor-note">Każdy kolejny rotor obraca się dopiero po pełnym obrocie poprzedniego (${alphabetLen} liter).</p>
         </div>
     `;
 
-    const pathSteps = step.path.map(p => `
-        <div class="path-step">
-            <div class="path-stage-name">${p.stage}</div>
-            <div class="path-transformation">
-                <span class="path-letter input ${p.reflected ? 'reflected' : ''}">${p.input}</span>
-                <span class="path-arrow">→</span>
-                <span class="path-letter output ${p.reflected ? 'reflected' : ''}">${p.output}</span>
+    // Plugboard
+    const plugboardHTML = (step.plugPairs && step.plugPairs.length) ?
+        `<div class="enigma-plugboard">${step.plugPairs.map(p => {
+            const used = step.path.some(s => s.plugPair && ((s.plugPair[0] === p[0] && s.plugPair[1] === p[1]) || (s.plugPair[0] === p[1] && s.plugPair[1] === p[0])));
+            return `<span class="plug-pair ${used ? 'active' : ''}">${p[0]} ↔ ${p[1]}</span>`;
+        }).join('')}</div>` : `<div class="enigma-plugboard"><span class="no-plug">Brak połączeń plugboard</span></div>`;
+
+    // Ścieżka sygnału - pokazuje transformacje przez rotory
+    const signalPath = step.path.map((p, idx) => {
+        const isReflected = p.reflected || false;
+        const isAfterReflection = idx > step.path.findIndex(x => x.reflected);
+        
+        // Określ kolor tła kroku
+        let colorClass = '';
+        if (isReflected) {
+            colorClass = 'signal-reflection'; // Żółty dla odbicia
+        } else if (isAfterReflection) {
+            colorClass = 'signal-return'; // Zielony dla powrotu
+        } else {
+            colorClass = 'signal-forward'; // Czerwony dla forward
+        }
+        
+        // Określ czy litery powinny być żółte (odbicie)
+        const inputReflected = isReflected;
+        const outputReflected = isReflected;
+        
+        return `
+            <div class="signal-step ${colorClass}">
+                <div class="signal-stage">${p.stage}</div>
+                <div class="signal-transform">
+                    <span class="signal-letter ${inputReflected ? 'reflected' : ''}">${p.input}</span>
+                    <span class="signal-arrow">→</span>
+                    <span class="signal-letter ${outputReflected ? 'reflected' : ''}">${p.output}</span>
+                </div>
             </div>
-            ${p.pos !== undefined && p.pos !== null ? `<div class="path-position">Pos: ${rotorPosToLetter(p.pos)}</div>` : ''}
+        `;
+    }).join('');
+
+    // Sprawdź czy plugboard zmienił literę wejściową
+    const plugboardInputStep = step.path.find(p => p.stage === 'Plugboard (in)');
+    const plugboardInputHTML = plugboardInputStep ? `
+        <div class="plugboard-change-notice">
+            <span class="notice-icon">🔌</span>
+            <span class="notice-text">Plugboard zamienia <strong>${plugboardInputStep.input}</strong> → <strong>${plugboardInputStep.output}</strong> przed wejściem do rotorów</span>
         </div>
-    `).join('');
+    ` : '';
+    
+    // Sprawdź czy plugboard zmienił literę wyjściową
+    const plugboardOutputStep = step.path.find(p => p.stage === 'Plugboard (out)');
+    const plugboardOutputHTML = plugboardOutputStep ? `
+        <div class="plugboard-change-notice">
+            <span class="notice-icon">🔌</span>
+            <span class="notice-text">Plugboard zamienia <strong>${plugboardOutputStep.input}</strong> → <strong>${plugboardOutputStep.output}</strong> na wyjściu z rotorów</span>
+        </div>
+    ` : '';
+    
+    // Oblicz minimalną szerokość dla ścieżki sygnału (zakładamy +2 kroki dla plugboard)
+    const baseSteps = step.path.filter(p => !p.stage.includes('Plugboard') && p.stage !== 'ETW' && p.stage !== 'Wyjście').length;
+    const minSteps = baseSteps + 2; // Dodaj miejsce na 2 potencjalne kroki plugboard
+    const minWidth = minSteps * 62; // 62px na krok (60px + 2px gap)
+    
+    // Informacja o mechanizmie obrotów
+    const rotationMechanismHTML = `
+        <div class="rotation-mechanism-info">
+            <span class="info-text">Rotor III obraca się przy każdym znaku. Rotor II obraca się gdy Rotor III osiąga kabr (⚙). Rotor I obraca się gdy Rotor II osiąga kabr.</span>
+        </div>
+    `;
 
     return `
-        <div class="compact-enigma">
-            <div class="compact-enigma-flex">
-                <div class="compact-enigma-circles">
-                    ${circles}
+        <div class="enigma-visualization">
+            ${plugboardHTML}
+            ${plugboardInputHTML}
+            ${rotationMechanismHTML}
+            
+            <div class="enigma-main-layout">
+                <div class="enigma-rotors-section">
+                    <div class="enigma-rotors-row">
+                        ${rotorsHTML}
+                    </div>
+                    
+                    <div class="enigma-reflector-row">
+                        ${reflectorHTML}
+                    </div>
                 </div>
-                <div class="compact-enigma-io">
-                    <div class="enigma-io-row"><span class="enigma-io-label">Wejście:</span><span class="enigma-io-value input">${step.inputChar}</span></div>
-                        <div class="enigma-io-row"><span class="enigma-io-label">Wynik:</span><span class="enigma-io-value output">${step.outputChar}</span></div>
+                
+                <div class="enigma-io-display">
+                    <div class="enigma-input">
+                        <span class="io-label">Wejście:</span>
+                        <span class="io-value input-value">${step.inputChar}</span>
+                    </div>
+                    <div class="enigma-output">
+                        <span class="io-label">Wyjście:</span>
+                        <span class="io-value output-value">${step.outputChar}</span>
+                    </div>
                 </div>
             </div>
             
-            <div class="compact-enigma-rotor-positions">
-                <div class="compact-enigma-pos-row">
-                    ${positionsDisplay}
-                </div>
-            </div>
+            ${plugboardOutputHTML}
             
-            ${legend}
-            
-            <div class="compact-enigma-path">
-                <div class="path-steps">
-                    ${pathSteps}
+            <div class="enigma-signal-path">
+                <h4 class="signal-path-title">Ścieżka sygnału:</h4>
+                <div class="signal-steps" style="min-width: ${minWidth}px;">
+                    ${signalPath}
                 </div>
             </div>
         </div>
