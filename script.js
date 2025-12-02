@@ -1,5 +1,22 @@
 //Funkcje obsługi wejścia danych
 document.addEventListener('DOMContentLoaded', () => {
+    // === DARK MODE ===
+    const themeToggle = document.getElementById('theme-toggle');
+    const body = document.body;
+    
+    // Sprawdź zapisany motyw w localStorage
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        body.classList.add('dark-mode');
+    }
+    
+    // Obsługa przełącznika motywu
+    themeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        const currentTheme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+        localStorage.setItem('theme', currentTheme);
+    });
+
     // === ELEMENTY DOM ===
     const cipherItems = document.querySelectorAll('.cipher-item');
     const currentCipherName = document.querySelector('.current-cipher-name');
@@ -12,6 +29,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputText = document.querySelector('.output-text');
     const copyBtn = document.getElementById('copy-btn');
     const resetBtn = document.getElementById('reset-btn');
+    // Documentation panel elements (embedded docs from md-pages.js)
+    const docsPanelSection = document.querySelector('.docs-panel-section');
+    const docsPanel = document.getElementById('docs-panel');
+    const docsTitle = document.getElementById('docs-title');
+    const docsContent = document.getElementById('docs-content');
+    const docsClose = document.getElementById('docs-close');
 
     // === PEŁNY POLSKI ALFABET (35 liter) ===
     const POLISH_LOWER = 'aąbcćdeęfghijklłmnńoópqrsśtuvwxyzźż';
@@ -23,6 +46,506 @@ document.addEventListener('DOMContentLoaded', () => {
     let shiftValue = 3;
     let railsValue = 3;        // szyfr Płotowy
     let offsetValue = 0;       // offset płotowy
+
+    // =====================================================
+    // TYDZIEŃ 9 Eksport wyników
+    // =====================================================
+    // =====================================================
+    // TYDZIEŃ 10: Analiza częstotliwości
+    // =====================================================
+    // Last encryption/decryption action (used for export)
+    // Structure: { type: 'encrypt'|'decrypt', cipher: 'caesar'|'vigenere'|'railfence'|'enigma', input: string, settings: object, visualization: Array, output: string, timestamp }
+    let lastAction = null;
+
+    // Expose getter/setter so other modules (export.js) can access/update lastAction
+    function setLastAction(action) {
+        lastAction = action;
+        // Keep a window-level copy for simple console debugging as well
+        window.__lastAction = lastAction;
+    }
+
+    function getLastAction() {
+        return lastAction;
+    }
+
+    window.getLastAction = getLastAction;
+    window.setLastAction = setLastAction;
+
+    // Frequency analysis UI elements (next to output)
+    const freqControls = document.querySelector('.freq-analysis-controls');
+    const freqBtn = document.getElementById('freq-analysis-btn');
+    const freqCloseBtn = document.getElementById('freq-analysis-close');
+    const freqPanel = document.getElementById('freq-analysis-panel');
+
+    // Show/hide helper
+    function showFrequencyUI(show) {
+        if (!freqControls) return;
+        freqControls.style.display = show ? 'block' : 'none';
+        if (!show && freqPanel) freqPanel.style.display = 'none';
+    }
+
+    // Compute raw counts of letters using the full Polish alphabet
+    function computeCounts(text) {
+        if (!text) return { total: 0, counts: {} };
+        const counts = {};
+        let total = 0;
+        for (let ch of text) {
+            if (ch === ' ') continue; // skip spaces
+            const lower = ch.toLowerCase();
+            if (POLISH_LOWER.includes(lower)) {
+                counts[lower] = (counts[lower] || 0) + 1;
+                total++;
+            }
+        }
+        return { total, counts };
+    }
+
+    // Convert counts to percentage map
+    function countsToPercent(countsMap, total) {
+        const result = {};
+        for (const ch of POLISH_LOWER) {
+            const cnt = countsMap[ch] || 0;
+            result[ch] = total > 0 ? (cnt / total) * 100 : 0;
+        }
+        return result;
+    }
+
+    // Escape html helper reused from export.js but local copy for small UI
+    function escapeHtmlLocal(str) {
+        if (str === undefined || str === null) return '';
+        return String(str).replace(/[&<>'"]/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
+    }
+
+    // Approximate expected Polish letter frequencies (percent) — used for comparison
+    const POLISH_EXPECTED_FREQ = {
+        a:8.91, ą:0.99, b:1.47, c:3.96, ć:0.40, d:3.25, e:7.66, ę:1.11, f:0.30, g:1.42, h:1.08, i:8.21, j:2.28,
+        k:3.51, l:2.10, ł:2.09, m:2.80, n:5.52, ń:0.20, o:7.75, ó:0.85, p:3.13, q:0.01, r:4.69, s:4.32, ś:0.66,
+        t:3.98, u:2.50, v:0.04, w:4.65, x:0.04, y:4.26, z:5.64, ź:0.06, ż:0.54
+    };
+
+    // Caesar analysis: determine best shift by correlating ciphertext freq with expected plain freq
+    function analyzeCaesarByFrequency(action) {
+        const cipherText = (action && action.output) ? action.output.toLowerCase().replace(/[^\p{L}]/gu, '') : '';
+        const { total, counts } = computeCounts(cipherText);
+        const cipherPercent = countsToPercent(counts, total);
+
+        // Build array of expected frequencies in order of POLISH_LOWER
+        const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
+        // Build ciphertext vector in same order
+        const cipherVec = POLISH_LOWER.split('').map(ch => cipherPercent[ch] || 0);
+
+        // Use chi-squared statistic to score candidate shifts (lower is better)
+        function chiSquaredScoreForShift(s) {
+            // For shift s, map expected plaintext frequency to expected ciphertext indices
+            // expectedCountAtCipherIndex[j] = total * expected[(j - s) mod N] / 100
+            let chi2 = 0;
+            for (let j = 0; j < ALPHABET_SIZE; j++) {
+                const plainIdx = (j - s + ALPHABET_SIZE) % ALPHABET_SIZE;
+                const expectedFreqPct = expected[plainIdx] || 0;
+                const expectedCount = (expectedFreqPct / 100) * Math.max(1, total); // avoid zero
+                const observedCount = counts[POLISH_LOWER[j]] || 0;
+                const diff = observedCount - expectedCount;
+                // protect against zero expected counts
+                chi2 += expectedCount > 0 ? (diff * diff) / expectedCount : 0;
+            }
+            return chi2;
+        }
+
+        const scores = [];
+        for (let s = 0; s < ALPHABET_SIZE; s++) {
+            const score = chiSquaredScoreForShift(s);
+            scores.push({ shift: s, score });
+        }
+        // lower chi-squared is better
+        scores.sort((a, b) => a.score - b.score);
+
+        const best = scores[0];
+
+        // Use best shift as predicted decryption (apply shift as decryption key)
+        function applyShiftToText(text, shift) {
+            const src = POLISH_LOWER + POLISH_UPPER;
+            return text.split('').map(ch => {
+                const isUpper = POLISH_UPPER.includes(ch);
+                const alph = isUpper ? POLISH_UPPER : POLISH_LOWER;
+                const idx = alph.indexOf(ch);
+                if (idx === -1) return ch;
+                const newIdx = (idx - shift + ALPHABET_SIZE) % ALPHABET_SIZE;
+                return alph[newIdx];
+            }).join('');
+        }
+
+        // produce top N candidates to be more informative for short texts
+        const top = scores.slice(0, 5).map(s => ({ shift: s.shift, score: s.score, plain: applyShiftToText(action.output || '', s.shift) }));
+        const predictedPlain = top.length ? top[0].plain : applyShiftToText(action.output || '', best.shift);
+
+        return { total, counts, cipherPercent, best, scores, top, predictedPlain };
+    }
+
+    // Vigenere analysis: if we have keyword length we analyze by columns, otherwise give overall freq
+    function analyzeVigenereByFrequency(action) {
+        const cipherText = (action && action.output) ? action.output.replace(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]/g, '') : '';
+        const { total, counts } = computeCounts(cipherText);
+        const cipherPercent = countsToPercent(counts, total);
+
+        const keyword = action.settings && (action.settings.keyword || action.settings.key || '');
+        let columns = [];
+        if (keyword && keyword.length > 0) {
+            const L = keyword.length;
+            for (let i = 0; i < L; i++) {
+                let col = '';
+                for (let j = i; j < cipherText.length; j += L) col += cipherText[j];
+                const { total:colTotal, counts:colCounts } = computeCounts(col);
+                const colPercent = countsToPercent(colCounts, colTotal);
+
+                // For each column, compute best Caesar shift using chi-squared (lower is better)
+                const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
+                function chi2ForShiftColumn(s) {
+                    let chi2 = 0;
+                    for (let k = 0; k < ALPHABET_SIZE; k++) {
+                        const plainIdx = (k - s + ALPHABET_SIZE) % ALPHABET_SIZE;
+                        const expectedFreqPct = expected[plainIdx] || 0;
+                        const expectedCount = (expectedFreqPct / 100) * Math.max(1, colTotal);
+                        const observedCount = colCounts[POLISH_LOWER[k]] || 0;
+                        const diff = observedCount - expectedCount;
+                        chi2 += expectedCount > 0 ? (diff * diff) / expectedCount : 0;
+                    }
+                    return chi2;
+                }
+                const colScores = [];
+                for (let s = 0; s < ALPHABET_SIZE; s++) colScores.push({ shift: s, score: chi2ForShiftColumn(s) });
+                // lower chi2 is better
+                colScores.sort((a,b) => a.score - b.score);
+                const best = colScores[0];
+
+                columns.push({ index: i, colTotal, colCounts, colPercent, colScores, best });
+            }
+        }
+
+        // Helper: Kasiski examination (find repeated substrings and distances)
+        function kasiskiExamination(text, minSize = 3, maxSize = 6) {
+            const clean = String(text || '').toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, '');
+            const sequences = {};
+            for (let size = minSize; size <= maxSize; size++) {
+                for (let i = 0; i + size <= clean.length; i++) {
+                    const seq = clean.substr(i, size);
+                    if (!sequences[seq]) sequences[seq] = [];
+                    sequences[seq].push(i);
+                }
+            }
+
+            const repeated = {};
+            const distances = [];
+            Object.keys(sequences).forEach(seq => {
+                const occ = sequences[seq];
+                if (occ.length > 1) {
+                    // compute pairwise distances
+                    const dists = [];
+                    for (let i = 0; i < occ.length; i++) {
+                        for (let j = i + 1; j < occ.length; j++) {
+                            const d = Math.abs(occ[j] - occ[i]);
+                            dists.push(d);
+                            distances.push(d);
+                        }
+                    }
+                    repeated[seq] = { positions: occ, distances: dists };
+                }
+            });
+
+            // factor counts for distances
+            const factorCounts = {};
+            distances.forEach(d => {
+                for (let f = 2; f <= 30; f++) {
+                    if (d % f === 0) {
+                        factorCounts[f] = (factorCounts[f] || 0) + 1;
+                    }
+                }
+            });
+
+            // produce sorted probable lengths
+            const probable = Object.keys(factorCounts).map(k => ({ len: parseInt(k), count: factorCounts[k] })).sort((a,b) => b.count - a.count);
+
+            return { repeated, distances, factorCounts, probable };
+        }
+
+        // Index-of-coincidence (IC) for a single string
+        function indexOfCoincidence(text) {
+            const clean = String(text || '').toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
+            const freq = {};
+            let N = 0;
+            for (const ch of clean) {
+                freq[ch] = (freq[ch] || 0) + 1;
+                N++;
+            }
+            if (N <= 1) return 0;
+            let num = 0;
+            for (const k in freq) {
+                const n = freq[k];
+                num += n * (n - 1);
+            }
+            return num / (N * (N - 1));
+        }
+
+        // If no keyword provided, run Kasiski + IC to propose lengths and try top candidates
+        let candidates = [];
+        if (!keyword || keyword.length === 0) {
+            const kas = kasiskiExamination(action.output || '', 3, 5);
+            const overallIC = indexOfCoincidence(action.output || '');
+
+            // take top probable lengths from kasiski, and also include some lengths by IC guess (peak at average close to Polish ~0.06-0.07?)
+            const probableLens = kas.probable.slice(0, 6).map(p => p.len);
+            // Add 1..8 in case none found (small fallback)
+            const tryLens = [...new Set([...probableLens, 2,3,4,5,6,7,8])].slice(0, 6);
+
+            // For each candidate length, attempt to compute best shifts per column via chi2 and assemble predicted key
+            tryLens.forEach(L => {
+                const perCol = [];
+                let totalScore = 0;
+                let keyLetters = [];
+                for (let i = 0; i < L; i++) {
+                    let col = '';
+                    const ciphertext = (action.output || '').replace(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]/g, '');
+                    for (let j = i; j < ciphertext.length; j += L) col += ciphertext[j];
+
+                    const { total:colTotal, counts:colCounts } = computeCounts(col);
+                    // chi2 for column, reuse expected
+                    const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
+                    function chi2Col(s) {
+                        let chi2 = 0;
+                        for (let k = 0; k < ALPHABET_SIZE; k++) {
+                            const plainIdx = (k - s + ALPHABET_SIZE) % ALPHABET_SIZE;
+                            const expectedFreqPct = expected[plainIdx] || 0;
+                            const expectedCount = (expectedFreqPct / 100) * Math.max(1, colTotal);
+                            const observedCount = colCounts[POLISH_LOWER[k]] || 0;
+                            const diff = observedCount - expectedCount;
+                            chi2 += expectedCount > 0 ? (diff * diff) / expectedCount : 0;
+                        }
+                        return chi2;
+                    }
+                    const colScores = [];
+                    for (let s = 0; s < ALPHABET_SIZE; s++) colScores.push({ shift: s, score: chi2Col(s) });
+                    colScores.sort((a,b)=>a.score-b.score);
+                    const best = colScores[0];
+                    totalScore += best.score;
+                    perCol.push({ index: i, total: colTotal, best, top: colScores.slice(0,4) });
+                    keyLetters.push(POLISH_UPPER[best.shift % POLISH_UPPER.length] || '?');
+                }
+
+                const assembledKey = keyLetters.join('');
+                // decrypt candidate
+                const candidatePlain = assembledKey.length > 0 ? vigenereCipher(action.output || '', assembledKey, false) : '';
+                candidates.push({ length: L, score: totalScore, key: assembledKey, plaintext: candidatePlain, perCol });
+            });
+
+            // sort candidates by score (lower better)
+            candidates.sort((a,b) => a.score - b.score);
+
+            return { total, counts, cipherPercent, kasiski: kas, ic: overallIC, candidates };
+        }
+        let predictedKey = '';
+        if (columns.length > 0) {
+            // Map best shifts into letter candidates (shift number => alphabet letter at that index)
+            predictedKey = columns.map(col => {
+                const s = col.best.shift;
+                // Use uppercase Polish alphabet for key display
+                return POLISH_UPPER[s % POLISH_UPPER.length] || '?';
+            }).join('');
+        }
+
+        // Build predicted plaintext using predictedKey (if available) so users can compare algorithm's guess with true plaintext
+        let predictedPlain = '';
+        if (predictedKey && predictedKey.length > 0) {
+            predictedPlain = vigenereCipher(action.output, predictedKey, false);
+        } else if (keyword && keyword.length > 0) {
+            // If we didn't compute a guessed key but real keyword exists in settings — show ground-truth decryption for reference
+            predictedPlain = vigenereCipher(action.output, keyword, false);
+        }
+
+        return { total, counts, cipherPercent, columns, predictedKey, predictedPlain };
+    }
+
+    function renderFreqAnalysisForAction(action) {
+        if (!action) return 'Brak danych.';
+        // Build header
+        let html = `<div style="font-size:0.95rem;color:#333;">
+            <div style="font-weight:700;margin-bottom:8px;">Analiza częstości — ${escapeHtmlLocal(action.cipher || '')}</div>`;
+
+        // Overall distribution
+        const { total, counts } = computeCounts(action.output || '');
+        const percent = countsToPercent(counts, total);
+
+        html += `<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+            <div style="flex:1 1 240px;min-width:240px;">
+            <div style="font-weight:600;margin-bottom:6px;">Rozkład liter (szyfrogram)</div>
+            <table style="width:100%;border-collapse:collapse;font-size:0.9rem;">
+                <thead><tr><th style='text-align:left;padding:4px'>Litera</th><th style='text-align:right;padding:4px'>Ile</th><th style='text-align:right;padding:4px'>%</th><th style='text-align:right;padding:4px'>Ocz.</th></tr></thead>
+                <tbody>`;
+
+        for (const ch of POLISH_LOWER.split('')) {
+            const cnt = counts[ch] || 0;
+            const p = percent[ch] || 0;
+            const expected = POLISH_EXPECTED_FREQ[ch] || 0;
+            html += `<tr><td style='padding:4px'>${escapeHtmlLocal(ch.toUpperCase())}</td><td style='padding:4px;text-align:right'>${cnt}</td><td style='padding:4px;text-align:right'>${p.toFixed(2)}%</td><td style='padding:4px;text-align:right'>${expected.toFixed(2)}%</td></tr>`;
+        }
+
+        html += `</tbody></table></div>`;
+
+        // Caesar-specific analysis
+        if (action.cipher === 'caesar') {
+                const res = analyzeCaesarByFrequency(action);
+                html += `<div style="flex:1 1 340px;min-width:320px;padding-left:8px;">
+                    <div style="font-weight:600;margin-bottom:6px;">Propozycja klucza (Cezar)</div>`;
+
+                // warn for short texts
+                if (res.total < 20) {
+                    html += `<div style="color:#a33;margin-bottom:8px;font-size:0.9rem;">Uwaga: analizowany tekst jest bardzo krótki (${res.total} znaków) — wyniki mogą być zawodne.</div>`;
+                }
+
+                html += `<div style='margin-bottom:8px;'>Najlepsze dopasowania (niższy wynik = lepsze dopasowanie):</div><ul style='margin:0 0 8px 14px;padding:0;'>`;
+                const topList = res.top.slice(0,3);
+                topList.forEach((t) => {
+                    html += `<li style='margin-bottom:6px;'>Przesunięcie <strong>+${t.shift}</strong> — chi²: ${t.score.toFixed(2)} — <span style='font-family:monospace;background:#fafafa;padding:4px;border-radius:4px;border:1px solid #eee;margin-left:6px;'>${escapeHtmlLocal(t.plain)}</span></li>`;
+                });
+
+                html += `</ul><div style='font-weight:600;margin-top:6px;'>Najlepsze odszyfrowanie (top1):</div>
+                    <div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;margin-top:6px;border:1px solid #eee;'>${escapeHtmlLocal(res.predictedPlain)}</div>
+                </div>`;
+        }
+
+        // Vigenere-specific analysis
+        if (action.cipher === 'vigenere') {
+            const res = analyzeVigenereByFrequency(action);
+            html += `<div style="flex:1 1 380px;min-width:320px;padding-left:8px;">
+                <div style="font-weight:600;margin-bottom:6px;">Analiza dla Vigenère — wykrywanie klucza</div>`;
+
+            // If Kasiski/IC output exists (no keyword provided)
+            if (res.kasiski) {
+                html += `<div style='margin-bottom:8px;color:#333;'>
+                    <div style='font-weight:700;margin-bottom:6px;'>Wyniki Kasiski</div>
+                    <div style='font-size:0.9rem;margin-bottom:6px;'>Znalezione powtarzające się sekwencje (krótkie):</div>`;
+
+                const keys = Object.keys(res.kasiski.repeated).slice(0,8);
+                if (keys.length === 0) {
+                    html += `<div style='font-style:italic;color:#666;margin-bottom:8px;'>Brak znaczących powtórzeń — spróbuj dłuższego tekstu</div>`;
+                } else {
+                    html += `<div style='margin-bottom:8px;'>`;
+                    keys.forEach(seq => {
+                        const r = res.kasiski.repeated[seq];
+                        html += `<div style='padding:6px;border:1px solid #eee;border-radius:6px;background:#fff;margin-bottom:6px;'><div style='font-weight:700'>${escapeHtmlLocal(seq)}</div><div style='font-size:0.85rem;color:#444'>Pozycje: ${r.positions.join(', ') || '-'} — Odległości: ${r.distances.join(', ')}</div></div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // probable lengths from factor counts
+                html += `<div style='margin-top:6px;margin-bottom:6px;font-weight:700;'>Sugerowane długości klucza (Kasiski)</div>`;
+                if (res.kasiski.probable && res.kasiski.probable.length) {
+                    html += `<div style='margin-bottom:8px;'>${res.kasiski.probable.slice(0,6).map(p => `dł=${p.len} (count=${p.count})`).join(', ')}</div>`;
+                } else {
+                    html += `<div style='font-style:italic;color:#666;margin-bottom:8px;'>Brak silnych kandydatów (Kasiski)</div>`;
+                }
+
+                // show index of coincidence
+                html += `<div style='margin-top:6px;margin-bottom:8px;'><strong>Index of Coincidence (IC):</strong> ${res.ic.toFixed(4)} — (wartość bliższa 0.06–0.07 sugeruje naturalny język)</div>`;
+
+                // show candidate keys produced by trying top lengths
+                if (res.candidates && res.candidates.length > 0) {
+                    html += `<div style='font-weight:700;margin-bottom:6px;'>Najlepsze kandydatury klucza (próbne długości)</div>`;
+                    res.candidates.slice(0,4).forEach((cand, idx) => {
+                        html += `<div style='padding:8px;border:1px solid ${idx===0?"#6aa84f":"#eee"};background:${idx===0?"#f0fff0":"#fff"};border-radius:6px;margin-bottom:8px;'>
+                            <div style='font-weight:700'>#${idx+1} — długość=${cand.length} &nbsp; klucz ≈ <strong style="letter-spacing:0.08em">${escapeHtmlLocal(cand.key)}</strong></div>
+                            <div style='font-size:0.85rem;color:#444;margin-top:6px;'>Score χ²: ${cand.score.toFixed(2)} — przykładowe odszyfrowanie:</div>
+                            <div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;margin-top:6px;border:1px solid #eee;'>${escapeHtmlLocal(cand.plaintext)}</div>`;
+
+                        // show per-column top shifts for the candidate to improve visibility
+                        html += `<div style='margin-top:8px;font-size:0.85rem;color:#333;'>Top przesunięcia kolumnowe:</div><div style='display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;'>`;
+                        cand.perCol.forEach(pc => {
+                            const top = pc.top.slice(0,3).map(t => `+${t.shift}(${t.score.toFixed(1)})`).join(', ');
+                            html += `<div style='padding:6px;border-radius:6px;border:1px solid #eee;background:#fff;min-width:120px;'><div style='font-weight:700'>Kol ${pc.index+1}</div><div style='font-size:0.85rem;color:#555'>Top: ${top}</div></div>`;
+                        });
+
+                        html += `</div></div>`;
+                    });
+                }
+
+                html += `<div style='margin-top:6px;font-style:italic;color:#666;'>Wskazówka: Kasiski i IC to metody heurystyczne — najlepiej działają na dłuższych tekstach. Jeśli znany jest klucz, wpisz go w ustawieniach by porównać wynik z rzeczywistym odszyfrowaniem.</div>`;
+            } else {
+                // keyword was present in settings — show detailed column analysis and predicted key/plaintext
+                html += `<div style='font-size:0.9rem;margin-bottom:6px;'>Długość klucza: ${res.columns.length} — aktualny klucz (przewidywany): <strong>${escapeHtmlLocal(res.predictedKey || '-')}</strong></div>`;
+                res.columns.forEach((col) => {
+                    html += `<div style='margin-bottom:8px;border:1px solid #eee;padding:8px;border-radius:6px;background:#fff;'>
+                        <div style='font-weight:700;margin-bottom:6px;'>Kolumna ${col.index+1} — znaki ${col.colTotal}</div>`;
+                    // show top 4 candidate shifts
+                    const top = col.colScores.slice(0,4);
+                    html += `<div style='margin-bottom:6px;'>Top przesunięcia: ${top.map(t=>`+${t.shift} (${t.score.toFixed(2)})`).join(', ')}</div>`;
+                    // show best guess for this column (as key char)
+                    const keyLetter = POLISH_UPPER[col.best.shift % POLISH_UPPER.length] || '?';
+                    html += `<div>Najlepszy klucz (kolumna) → <strong>${keyLetter}</strong></div>`;
+                    html += `</div>`;
+                });
+
+                if (res.predictedPlain) {
+                    html += `<div style='font-weight:600;margin-top:6px;'>Odszyfrowanie przy użyciu klucza:</div>
+                            <div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;margin-top:6px;border:1px solid #eee;'>${escapeHtmlLocal(res.predictedPlain)}</div>`;
+                }
+            }
+
+            html += `</div>`;
+        }
+
+        html += `</div>`; // wrap
+
+        // Provide side-by-side comparison of cipher output and predicted plaintext (if available)
+        html += `<div style='margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;'>
+            <div style='flex:1 1 300px;min-width:220px;'><div style='font-weight:700'>Zaszyfrowany tekst</div><div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;border:1px solid #eee;margin-top:6px;'>${escapeHtmlLocal(action.output || '')}</div></div>`;
+
+        if (action.cipher === 'caesar') {
+            const res = analyzeCaesarByFrequency(action);
+            html += `<div style='flex:1 1 300px;min-width:220px;'><div style='font-weight:700'>Przewidywane odszyfrowanie</div><div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;border:1px solid #eee;margin-top:6px;'>${escapeHtmlLocal(res.predictedPlain)}</div></div>`;
+        }
+
+        html += `</div>`;
+
+        return html + '</div>';
+    }
+
+    // Attach click handler for freq analysis button
+    if (freqBtn) {
+        freqBtn.addEventListener('click', () => {
+            const action = getLastAction();
+            if (!action) {
+                if (window.showNotification) window.showNotification('Brak danych do analizy', 'warning');
+                return;
+            }
+
+            // When user explicitly runs analysis, compute structured data and keep a persistent record
+            const analyzed = (action.cipher === 'caesar') ? analyzeCaesarByFrequency(action) : analyzeVigenereByFrequency(action);
+            // render HTML for UI
+            const html = renderFreqAnalysisForAction(action);
+
+            // store analysis in lastAction so export can include it later when requested
+            const updated = Object.assign({}, action, { analysisClicked: true, analysisHtml: html, analysisData: analyzed });
+            setLastAction(updated);
+
+            // show panel and ensure close button is visible
+            if (freqPanel.style.display === 'none' || !freqPanel.style.display) {
+                freqPanel.innerHTML = html;
+                freqPanel.style.display = 'block';
+                if (freqCloseBtn) freqCloseBtn.style.display = 'inline-block';
+            } else {
+                // if already open, re-render with latest content
+                freqPanel.innerHTML = html;
+                freqPanel.style.display = 'block';
+                if (freqCloseBtn) freqCloseBtn.style.display = 'inline-block';
+            }
+        });
+    }
+
+    // Close analysis panel (do not clear 'analysisClicked' — exported data remains available since user ran the analysis)
+    if (freqCloseBtn) {
+        freqCloseBtn.addEventListener('click', () => {
+            if (freqPanel) freqPanel.style.display = 'none';
+            freqCloseBtn.style.display = 'none';
+        });
+    }
 
     // =====================================================
     // TYDZIEŃ 7: Testowanie aplikacji, Sanityzacja
@@ -504,16 +1027,18 @@ window.updatePlugboardList = function() {
         const quizSection = document.getElementById('quiz');
         const tutorialSection = document.getElementById('tutorial');
         const homeSection = document.getElementById('home');
+        const docsPanelSection = document.querySelector('.docs-panel-section');
         
         // Usuń klasę active ze wszystkich ukrywalnych sekcji
         if (quizSection) quizSection.classList.remove('active');
         if (tutorialSection) tutorialSection.classList.remove('active');
+        if (docsPanelSection) docsPanelSection.classList.remove('active');
         
         // Pokaż wybraną sekcję (quiz i tutorial)
         if (sectionId === 'quiz' && quizSection) {
             quizSection.classList.add('active');
-        } else if (sectionId === 'tutorial' && tutorialSection) {
-            tutorialSection.classList.add('active');
+        } else if (sectionId === 'tutorial' && docsPanelSection) {
+            docsPanelSection.classList.add('active');
         }
         
         // Płynne przewijanie do sekcji (tylko jeśli nie jest to pierwsze załadowanie)
@@ -592,13 +1117,25 @@ window.updatePlugboardList = function() {
                         Krok <span class="current-step">0</span> z <span class="total-steps">0</span>
                     </div>
                     <button class="table-viz-btn" id="show-table-btn" style="display: none;" onclick="openTableModal()">
-                        📊 Tabela substytucji
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="3" y1="15" x2="21" y2="15"></line>
+                            <line x1="9" y1="3" x2="9" y2="21"></line>
+                            <line x1="15" y1="3" x2="15" y2="21"></line>
+                        </svg>
+                        Tabela substytucji
                     </button>
                 </div>
                 
                 <div class="visualization-area">
                     <div class="viz-placeholder">
-                        <div class="placeholder-icon">🔍</div>
+                        <div class="placeholder-icon">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <path d="m21 21-4.35-4.35"></path>
+                            </svg>
+                        </div>
                         <p>Wybierz szyfr Cezara i zaszyfruj tekst aby zobaczyć wizualizację</p>
                     </div>
                 </div>
@@ -714,8 +1251,7 @@ window.updatePlugboardList = function() {
         } else if (currentCipher === 'enigma') {
             vizArea.innerHTML = renderEnigmaVisualizationStep(step);
         } else if (currentCipher === 'caesar') {
-            
-                // Renderuj wizualizację Cezara (istniejąca logika)
+            // Renderuj wizualizację Cezara (istniejąca logika)
                 // Formatowanie przesunięcia dla wyświetlenia
                 const shiftAbs = Math.abs(step.shift);
                 const shiftSign = step.shift >= 0 ? '+' : '-';
@@ -726,7 +1262,57 @@ window.updatePlugboardList = function() {
                 const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
                 const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
                 
+                // Render the classic inline Caesar visualization used by the app
                 vizArea.innerHTML = `
+                    <div class="viz-step-content">
+                        <div class="step-header">
+                            <h4>Krok ${step.stepNumber}: ${step.description}</h4>
+                        </div>
+
+                        <div class="char-transformation">
+                            <div class="char-box original">
+                                <div class="char-label">${originalLabel}</div>
+                                <div class="char-display">${step.original}</div>
+                                <div class="char-position">Pozycja: ${step.originalIndex < 10 ? '0' + step.originalIndex : step.originalIndex}</div>
+                            </div>
+
+                            <div class="transform-arrow">
+                                <div class="shift-info">${shiftDisplay}</div>
+                                <div class="arrow">→</div>
+                            </div>
+
+                            <div class="char-box transformed">
+                                <div class="char-label">${transformedLabel}</div>
+                                <div class="char-display">${step.transformed}</div>
+                                <div class="char-position">Pozycja: ${step.newIndex < 10 ? '0' + step.newIndex : step.newIndex}</div>
+                            </div>
+                        </div>
+
+                        <div class="alphabet-highlight">
+                            <div class="alphabet-row">
+                                <span class="alphabet-label">${step.isUpperCase ? 'Wielkie' : 'Małe'} litery:</span>
+                                <div class="alphabet-letters">
+                                    ${renderAlphabetWithHighlights(step)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+        }
+    }
+
+    // Return HTML string for a single Caesar visualization step (reusable for export)
+    function renderCaesarVisualizationStep(step) {
+        // Formatowanie przesunięcia dla wyświetlenia
+        const shiftAbs = Math.abs(step.shift);
+        const shiftSign = step.shift >= 0 ? '+' : '-';
+        const shiftFormatted = shiftAbs < 10 ? `0${shiftAbs}` : `${shiftAbs}`;
+        const shiftDisplay = `${shiftSign}${shiftFormatted}`;
+
+        const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
+        const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
+
+        return `
                     <div class="viz-step-content">
                         <div class="step-header">
                             <h4>Krok ${step.stepNumber}: ${step.description}</h4>
@@ -761,8 +1347,52 @@ window.updatePlugboardList = function() {
                         </div>
                     </div>
                 `;
-        }
     }
+
+    // --- Export helper: render all visualization steps as full HTML (used by export.js)
+    function renderFullVisualizationHTML(action) {
+        if (!action || !Array.isArray(action.visualization)) return '';
+
+        // Preserve original global currentCipher and restore afterwards
+        const prevCipher = currentCipher;
+        currentCipher = action.cipher; // ensure renderVisualizationStep picks the correct rendering branch
+
+        // Build a wrapper that groups all steps and step headers
+        const content = action.visualization.map((step, i) => {
+            try {
+                let html = '';
+                switch ((action.cipher || '').toLowerCase()) {
+                    case 'vigenere':
+                        if (typeof renderVigenereVisualizationStep === 'function') html = renderVigenereVisualizationStep(step);
+                        break;
+                    case 'railfence':
+                        if (typeof renderRailFenceVisualizationStep === 'function') html = renderRailFenceVisualizationStep(step);
+                        break;
+                    case 'enigma':
+                        if (typeof renderEnigmaVisualizationStep === 'function') html = renderEnigmaVisualizationStep(step);
+                        break;
+                    case 'caesar':
+                        if (typeof renderCaesarVisualizationStep === 'function') html = renderCaesarVisualizationStep(step);
+                        break;
+                    default:
+                        html = `<pre style="background:#fafafa;padding:8px;border:1px solid #eee;border-radius:6px;">${escapeHtml(JSON.stringify(step, null, 2))}</pre>`;
+                }
+
+                // if the renderer returned falsy, fallback to textual form
+                if (!html) html = `<pre style="background:#fafafa;padding:8px;border:1px solid #eee;border-radius:6px;">${escapeHtml(JSON.stringify(step, null, 2))}</pre>`;
+
+                return `<div class="export-viz-step" style="margin-bottom:18px;">${html}</div>`;
+            } catch (e) {
+                return `<pre style="background:#fafafa;padding:8px;border:1px solid #eee;border-radius:6px;">${escapeHtml(JSON.stringify(step, null, 2))}</pre>`;
+            }
+        }).join('\n');
+
+        currentCipher = prevCipher;
+        return content;
+    }
+
+    // Expose renderer for export.js
+    window.renderFullVisualizationHTML = renderFullVisualizationHTML;
     
     function renderAlphabetWithHighlights(step) {
         const alphabet = step.isUpperCase ? POLISH_UPPER : POLISH_LOWER;
@@ -834,10 +1464,10 @@ window.updatePlugboardList = function() {
         
         if (spaState.isPlaying) {
             stopVisualizationPlayback();
-            playBtn.innerHTML = '▶️';
+            playBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
         } else {
             startVisualizationPlayback();
-            playBtn.innerHTML = '⏸️';
+            playBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
         }
     }
     
@@ -856,7 +1486,7 @@ window.updatePlugboardList = function() {
                 updateVisualizationDisplay();
             } else {
                 stopVisualizationPlayback();
-                document.getElementById('play-viz').innerHTML = '▶️';
+                document.getElementById('play-viz').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
                 showNotification('Wizualizacja zakończona!', 'success');
             }
         }, 1500);
@@ -888,7 +1518,12 @@ window.updatePlugboardList = function() {
             
             vizArea.innerHTML = `
                 <div class="viz-placeholder">
-                    <div class="placeholder-icon">🔍</div>
+                    <div class="placeholder-icon">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <path d="m21 21-4.35-4.35"></path>
+                        </svg>
+                    </div>
                     <p>${message}</p>
                 </div>
             `;
@@ -1083,6 +1718,9 @@ window.updatePlugboardList = function() {
         });
     }
 
+    // expose to other files (export.js may call this)
+    window.showNotification = showNotification;
+
     function _processNotificationQueue() {
         if (_notificationProcessing) return;
         if (_notificationQueue.length === 0) return;
@@ -1130,7 +1768,7 @@ window.updatePlugboardList = function() {
         if (spaState.isPlaying) {
             stopVisualizationPlayback();
             const playBtn = document.getElementById('play-viz');
-            if (playBtn) playBtn.innerHTML = '▶️';
+            if (playBtn) playBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
         }
         
         const step = spaState.visualizationSteps[spaState.currentStep];
@@ -1142,13 +1780,21 @@ window.updatePlugboardList = function() {
                         <h3>Tabela Substytucji Vigenère</h3>
                         <div class="modal-controls">
                             <button class="btn-icon btn-icon-sm" title="Poprzedni krok" onclick="modalPrevStep()">
-                                ⏮️
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                                    <line x1="5" y1="19" x2="5" y2="5"></line>
+                                </svg>
                             </button>
                             <button class="btn-icon btn-icon-sm" title="Odtwórz" id="modal-play-btn" onclick="toggleModalPlayback()">
-                                ▶️
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                </svg>
                             </button>
                             <button class="btn-icon btn-icon-sm" title="Następny krok" onclick="modalNextStep()">
-                                ⏭️
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                                    <line x1="19" y1="5" x2="19" y2="19"></line>
+                                </svg>
                             </button>
                             <span class="modal-step-counter">
                                 Krok <span id="modal-current-step">${spaState.currentStep + 1}</span> / <span id="modal-total-steps">${spaState.visualizationSteps.length}</span>
@@ -1225,7 +1871,7 @@ window.updatePlugboardList = function() {
         
         if (spaState.modalPlaying) {
             stopModalPlayback();
-            if (playBtn) playBtn.innerHTML = '▶️';
+            if (playBtn) playBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
         } else {
             // Jeśli jesteśmy na ostatnim kroku, wracamy na początek
             if (spaState.currentStep >= spaState.visualizationSteps.length - 1) {
@@ -1234,7 +1880,7 @@ window.updatePlugboardList = function() {
                 updateVisualizationDisplay();
             }
             startModalPlayback();
-            if (playBtn) playBtn.innerHTML = '⏸️';
+            if (playBtn) playBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>';
         }
     }
     
@@ -1251,7 +1897,7 @@ window.updatePlugboardList = function() {
             } else {
                 stopModalPlayback();
                 const playBtn = document.getElementById('modal-play-btn');
-                if (playBtn) playBtn.innerHTML = '▶️';
+                if (playBtn) playBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
                 showNotification('Wizualizacja zakończona!', 'success');
             }
         }, 1500);
@@ -1901,7 +2547,7 @@ function letterToRotorPos(letter) {
         stopVisualizationPlayback();
         const playBtn = document.getElementById('play-viz');
         if (playBtn) {
-            playBtn.innerHTML = '▶️';
+            playBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>';
         }
         
         // Wyczyść pola
@@ -1920,6 +2566,8 @@ function letterToRotorPos(letter) {
         }
         
         clearVisualization();
+        // hide frequency analysis when resetting all
+        showFrequencyUI(false);
         showNotification('Pola zostały wyczyszczone', 'success');
     }
 
@@ -1961,6 +2609,8 @@ function letterToRotorPos(letter) {
             }
 
             //Zmiany w html dla wyboru szyfru
+            // Show/hide frequency analysis UI depending on selected cipher
+            showFrequencyUI(currentCipher === 'caesar' || currentCipher === 'vigenere');
             // === SZYFR CEZARA ===
             if (currentCipher === 'caesar') {
                 settingsGroup.innerHTML = `
@@ -2117,19 +2767,31 @@ function letterToRotorPos(letter) {
                 // Inicjalizuj wizualizację po wyborze szyfru Enigma
                 setTimeout(initializeVisualization, 100);
 
-                // --- aktywacja eventu dodawania kabli ---
-                document.getElementById("addPlug").onclick = () => {
-                    const a = document.getElementById("plugA").value.toUpperCase();
-                    const b = document.getElementById("plugB").value.toUpperCase();
-                    
-                    addPlugPair(a, b);
-                };
+                // --- aktywacja eventu dodawania kabli (bezpiecznie, jeśli element istnieje) ---
+                const addPlugBtn = document.getElementById("addPlug");
+                if (addPlugBtn) {
+                    addPlugBtn.addEventListener('click', () => {
+                        const aEl = document.getElementById("plugA");
+                        const bEl = document.getElementById("plugB");
+                        const a = aEl ? aEl.value.toUpperCase() : '';
+                        const b = bEl ? bEl.value.toUpperCase() : '';
+                        if (!a || !b) {
+                            showNotification('Wybierz dwie litery do podłączenia', 'warning');
+                            return;
+                        }
+                        addPlugPair(a, b);
+                    });
+                }
             }
 
-            document.getElementById("clearPlugboard").onclick = () => {
-                PLUGBOARD = {};
-                updatePlugboardList();
-            };
+            // Clear plugboard button may or may not exist in the DOM; guard safely
+            const clearPlugBtn = document.getElementById("clearPlugboard");
+            if (clearPlugBtn) {
+                clearPlugBtn.addEventListener('click', () => {
+                    PLUGBOARD = {};
+                    updatePlugboardList();
+                });
+            }
 
         });
     });
@@ -2160,6 +2822,18 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla szyfrowania
             generateVisualizationSteps(input, shiftValue, true);
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'encrypt',
+                cipher: 'caesar',
+                input: input,
+                settings: { shift: shiftValue },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
+            showFrequencyUI(true);
+            showFrequencyUI(true);
             showNotification('Tekst zaszyfrowany!', 'success');
         }
         //Vigenere
@@ -2183,6 +2857,18 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, true);
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'encrypt',
+                cipher: 'vigenere',
+                input: input,
+                settings: { keyword: cleanKey },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
+            showFrequencyUI(true);
+            showFrequencyUI(true);
             
             // Pokaż przycisk tabeli substytucji
             const tableBtn = document.getElementById('show-table-btn');
@@ -2203,6 +2889,19 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla szyfru płotowego (uwzględnia offset)
             generateRailFenceVisualizationSteps(input, railsValue, offsetValue, true);
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'encrypt',
+                cipher: 'railfence',
+                input: input,
+                settings: { rails: railsValue, offset: offsetValue },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
+            showFrequencyUI(false);
+            // for other ciphers, frequency analysis not offered
+            showFrequencyUI(false);
             
             showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
         }
@@ -2244,6 +2943,16 @@ function letterToRotorPos(letter) {
                 const initPos = grundstellung.map(ch => letterToRotorPos(ch));
                 const ringPos = ringstellung.map(ch => letterToRotorPos(ch));
                 generateEnigmaVisualizationSteps(input, order, initPos, ringPos, true);
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'encrypt',
+                cipher: 'enigma',
+                input: input,
+                settings: { order, grundstellung, ringstellung, plugboard: { ...PLUGBOARD } },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
             } catch (e) {
                 console.warn('Wizualizacja Enigmy nie powiodła się:', e);
             }
@@ -2274,6 +2983,16 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla deszyfrowania (z ujemnym przesunięciem)
             generateVisualizationSteps(input, -shiftValue, false);
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'decrypt',
+                cipher: 'caesar',
+                input: input,
+                settings: { shift: shiftValue },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
             showNotification('Tekst odszyfrowany!', 'success');
         }
         //Vigenere
@@ -2305,6 +3024,16 @@ function letterToRotorPos(letter) {
             }
             
             showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
+            // Save last action for export (TXT/PDF)
+            setLastAction({
+                type: 'decrypt',
+                cipher: 'vigenere',
+                input: input,
+                settings: { keyword: cleanKey },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
         }
 
         //Płotowy
@@ -2315,6 +3044,15 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla deszyfrowania płotowego (uwzględnia offset)
             generateRailFenceVisualizationSteps(input, railsValue, offsetValue, false);
+            setLastAction({
+                type: 'decrypt',
+                cipher: 'railfence',
+                input: input,
+                settings: { rails: railsValue, offset: offsetValue },
+                visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+                output: result,
+                timestamp: new Date().toISOString()
+            });
             
             showNotification('Tekst odszyfrowany szyfrem płotowym!', 'success');
         }
@@ -2350,6 +3088,16 @@ function letterToRotorPos(letter) {
     );
 
     outputText.textContent = result;
+    // Save last action for export (TXT/PDF) for decryption
+    setLastAction({
+        type: 'decrypt',
+        cipher: 'enigma',
+        input: input,
+        settings: { order, grundstellung, ringstellung, plugboard: { ...PLUGBOARD } },
+        visualization: spaState.visualizationSteps ? [...spaState.visualizationSteps] : [],
+        output: result,
+        timestamp: new Date().toISOString()
+    });
     try {
         const initPos = grundstellung.map(ch => letterToRotorPos(ch));
         const ringPos = ringstellung.map(ch => letterToRotorPos(ch));
@@ -2397,6 +3145,9 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
         }
     });
 
+    // Export code moved to `export.js` to keep responsibilities separated.
+    // export.js runs after script.js and uses `window.getLastAction()` to fetch the most recent session data.
+
     // === RESET ===
     resetBtn.addEventListener('click', resetAll);
 
@@ -2423,6 +3174,62 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
     inputTextarea.placeholder = 'Najpierw wybierz szyfr...';
     
     updateCharCount();
+
+    // Wire documentation links (class=doc-link) to show content from mdPages (md-pages.js)
+    document.querySelectorAll('.doc-link').forEach(link => {
+        link.addEventListener('click', (ev) => {
+            ev.preventDefault();
+            const page = link.dataset.page;
+            if (!page) return;
+
+            // Make sure docs panel exists
+            if (!docsPanel || !docsContent) return;
+
+            // Prepare content
+            let md = '';
+            let title = link.textContent.trim() || page;
+
+            if (page === 'DOCUMENTATION') {
+                // combine README + specified pages
+                md += (window.mdPages && window.mdPages.README) ? window.mdPages.README + '\n\n---\n\n' : '';
+                const extras = ['Analiza_częstości_i_słabości_klasycznych_szyfrów','Szyfr_Cezara','VIGENERE','PLOTOWY','ENIGMA'];
+                extras.forEach(k => {
+                    if (window.mdPages && window.mdPages[k]) {
+                        md += `## ${k}\n\n` + window.mdPages[k] + '\n\n---\n\n';
+                    }
+                });
+            } else if (window.mdPages && window.mdPages[page]) {
+                md = window.mdPages[page];
+            } else {
+                md = `Brak zawartości dla: ${page}`;
+            }
+
+            // convert markdown to HTML (marked) and sanitize if possible
+            let html = '';
+            if (window.marked) html = marked.parse(md);
+            else html = '<pre>' + md.replace(/</g,'&lt;') + '</pre>';
+            if (window.DOMPurify) html = DOMPurify.sanitize(html);
+
+            docsTitle.textContent = title;
+            docsContent.innerHTML = html;
+            
+            // Show the docs panel section wrapper
+            if (docsPanelSection) {
+                docsPanelSection.classList.add('active');
+            }
+            
+            // Use setTimeout to ensure content is rendered before scrolling
+            setTimeout(() => {
+                if (docsPanelSection) {
+                    docsPanelSection.scrollIntoView({behavior:'smooth', block:'start'});
+                }
+            }, 100);
+        });
+    });
+
+    if (docsClose) docsClose.addEventListener('click', () => {
+        if (docsPanelSection) docsPanelSection.classList.remove('active');
+    });
 
     // Aktualizacja licznika znaków również po sanityzacji
     inputTextarea.addEventListener('input', () => {

@@ -120,6 +120,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const answersReview = document.getElementById("answers-review");
     const quizQuestions = document.getElementById("quiz-questions");
     const mainQuizCategories = document.querySelector('.main-quiz-categories');
+    const quizCloseBtn = document.getElementById("quiz-close");
 
 
 
@@ -127,6 +128,18 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentIndex = 0;
     let answers = []; // indeksy zaznaczeń użytkownika
     const letters = ["A","B","C","D","E","F"];
+
+    // Obsługa przycisku zamknij
+    if (quizCloseBtn) {
+        quizCloseBtn.addEventListener("click", () => {
+            const quizSection = document.getElementById("quiz");
+            if (quizSection) {
+                quizSection.classList.remove('active');
+                // Opcjonalnie: przejdź do strony głównej
+                window.location.hash = 'home';
+            }
+        });
+    }
 
     // KATEGORIE
     document.querySelectorAll(".quiz-category-card").forEach(card => {

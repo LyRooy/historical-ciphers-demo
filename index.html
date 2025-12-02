@@ -16,14 +16,28 @@
             <ul class="nav-menu">
                 <li><a href="#home" class="nav-link">Start</a></li>
                 <li><a href="#app" class="nav-link active">Aplikacja</a></li>
-                <li><a href="#tutorial" class="nav-link">Tutorial</a></li>
+                <li><a href="#tutorial" class="nav-link doc-link" data-page="USER_GUIDE">Tutorial</a></li>
                 <li><a href="#quiz" class="nav-link">Quiz</a></li>
                 <li><a href="#bottom" class="nav-link">Informacje</a></li>
             </ul>
+            <button id="theme-toggle" class="theme-toggle" title="Przełącz tryb ciemny">
+                        <svg class="theme-icon sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                        <svg class="theme-icon moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
         </div>
-    </nav>
-
-    <!-- Sekcja informacyjna -->
+    </nav>    <!-- Sekcja informacyjna -->
     <section id="home" class="hero">
         <div class="hero-background">
             <div class="animated-grid"></div>
@@ -38,7 +52,7 @@
                 </p>
                 <div class="hero-buttons">
                     <a href="#app" class="btn btn-primary">Rozpocznij naukę</a>
-                    <a href="#tutorial" class="btn btn-secondary">Zobacz tutorial</a>
+                    <a href="#tutorial" class="btn btn-secondary doc-link" data-page="USER_GUIDE">Przewodnik użytkownika</a>
                 </div>
             </div>
             <div class="hero-visual">
@@ -118,6 +132,11 @@
                     </div>
                     <div class="topbar-right">
                         <button class="btn-icon" id="reset-btn" title="Resetuj wszystko">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="1 4 1 10 7 10"></polyline>
+                                <polyline points="23 20 23 14 17 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
                         </button>
                     </div>
                 </div>
@@ -167,13 +186,21 @@
                                 <h3>Wizualizacja krok po kroku</h3>
                                 <div class="viz-controls">
                                     <button class="btn-icon btn-icon-sm" title="Poprzedni krok" id="prev-step">
-                                        ⏮️
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="19 20 9 12 19 4 19 20"></polygon>
+                                            <line x1="5" y1="19" x2="5" y2="5"></line>
+                                        </svg>
                                     </button>
                                     <button class="btn-icon btn-icon-sm" title="Odtwórz" id="play-viz">
-                                        ▶️
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                                        </svg>
                                     </button>
                                     <button class="btn-icon btn-icon-sm" title="Następny krok" id="next-step">
-                                        ⏭️
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <polygon points="5 4 15 12 5 20 5 4"></polygon>
+                                            <line x1="19" y1="5" x2="19" y2="19"></line>
+                                        </svg>
                                     </button>
                                 </div>
                             </div>
@@ -192,7 +219,12 @@
                                 
                                 <div class="visualization-area">
                                     <div class="viz-placeholder">
-                                        <div class="placeholder-icon">🔍</div>
+                                        <div class="placeholder-icon">
+                                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="11" cy="11" r="8"></circle>
+                                                <path d="m21 21-4.35-4.35"></path>
+                                            </svg>
+                                        </div>
                                         <p>Wizualizacja pojawi się po zaszyfrowaniu</p>
                                     </div>
                                 </div>
@@ -222,10 +254,20 @@
                             <div class="card-header">
                                 <h3>Wynik</h3>
                                 <button class="btn-icon btn-icon-sm" title="Kopiuj" id="copy-btn">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                    </svg>
                                 </button>
                             </div>
                             <div class="output-area">
                                 <code class="output-text">Wynik pojawi się tutaj...</code>
+                                <!-- Frequency analysis controls (hidden by default, shown for Caesar & Vigenere) -->
+                                <div class="freq-analysis-controls" style="margin-top:10px;display:none;">
+                                    <button class="btn btn-outline btn-sm" id="freq-analysis-btn">Dokonaj analizy częstości</button>
+                                    <button class="btn btn-outline btn-sm" id="freq-analysis-close" style="margin-left:8px;display:none;">Zamknij</button>
+                                    <div id="freq-analysis-panel" style="display:none;margin-top:12px;"></div>
+                                </div>
                             </div>
                             
                             <!-- Eksport -->
@@ -247,8 +289,13 @@
     <!-- Sekcja Quiz -->
     <section id="quiz" class="quiz-section">
         <div class="container">
-            <h2 class="section-title">Quiz kryptograficzny</h2>
-            <p class="section-subtitle">Sprawdź swoją wiedzę z klasycznych szyfrów!</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                <div>
+                    <h2 class="section-title" style="margin-bottom:0;">Quiz kryptograficzny</h2>
+                    <p class="section-subtitle" style="margin-bottom:0;">Sprawdź swoją wiedzę z klasycznych szyfrów!</p>
+                </div>
+                <button id="quiz-close" class="btn btn-outline">Zamknij</button>
+            </div>
             
             <!-- Główne quizy -->
             <div class="quiz-categories main-quiz-categories">
@@ -328,12 +375,12 @@
                     <h4>Klasyczne szyfry</h4>
                     <p>Interaktywna platforma edukacyjna do nauki klasycznych metod kryptografii.</p>
                 </div>
-                <div class="footer-section">
+                <div class="footer-section footer-resources">
                     <h4>Zasoby</h4>
                     <ul>
-                        <li><a href="#">Dokumentacja</a></li>
+                        <li><a href="#" class="doc-link" data-page="DOCUMENTATION">Dokumentacja</a></li>
                         <li><a href="https://github.com/LyRooy/historical-ciphers-demo">GitHub Repository</a></li>
-                        <li><a href="#">Tutorial PDF</a></li>
+                        <li><a href="#" class="doc-link" data-page="SECURITY_POLICY">Polityka prywatności</a></li>
                     </ul>
                 </div>
             </div>
@@ -344,7 +391,32 @@
         </div>
     </footer>
 
+    <!-- Documentation panel (hidden by default) -->
+    <section id="tutorial" class="docs-panel-section">
+        <div id="docs-panel">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h2 id="docs-title" style="margin:0;font-size:1.5rem">Dokumentacja</h2>
+                <div>
+                    <button id="docs-close" class="btn btn-outline">Zamknij</button>
+                </div>
+            </div>
+            <div id="docs-content">Treść dokumentacji</div>
+        </div>
+        </div>
+    </section>
+
+    <!-- jsPDF (for PDF export) loaded before main script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2pdf bundle (captures full HTML + CSS view, recommended for visualization snapshots) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+    <!-- Markdown parsing + sanitization libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
+    <script src="md-pages.js"></script>
     <script src="script.js"></script>
+    <!-- export helpers (separated) -->
+    <script src="export.js"></script>
     <script src="quizes.js"></script>
 </body>
 </html>
