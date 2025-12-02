@@ -2322,22 +2322,24 @@ function letterToRotorPos(letter) {
         //Enigma
         if (currentCipher === 'enigma') {
 
+    // NOTE: reading controls must be consistent with encryption handler
+    // encryption reads order as [order2, order1, order0] (RIGHT, MIDDLE, LEFT)
     const order = [
-        parseInt(document.getElementById('order0').value),
-        parseInt(document.getElementById('order1').value),
-        parseInt(document.getElementById('order2').value)
+        parseInt(document.getElementById('order2').value), // RIGHT
+        parseInt(document.getElementById('order1').value), // MIDDLE
+        parseInt(document.getElementById('order0').value)  // LEFT
     ];
 
     const grundstellung = [
-        document.getElementById('g0').value, // prawy
-        document.getElementById('g1').value, // środkowy
-        document.getElementById('g2').value  // lewy
+        document.getElementById('g2').value, // RIGHT
+        document.getElementById('g1').value, // MIDDLE
+        document.getElementById('g0').value  // LEFT
     ];
 
     const ringstellung = [
-        document.getElementById('r0').value, // prawy
-        document.getElementById('r1').value, // środkowy
-        document.getElementById('r2').value  // lewy
+        document.getElementById('r2').value, // RIGHT
+        document.getElementById('r1').value, // MIDDLE
+        document.getElementById('r0').value  // LEFT
     ];
 
     const result = enigmaEncrypt(
@@ -2356,6 +2358,25 @@ function letterToRotorPos(letter) {
         console.warn('Wizualizacja Enigmy (odszyfrowanie) nie powiodła się:', e);
     }
 }
+
+// --- optional debug helper to check Enigma round-trip (dev/testing) ---
+// Set window.DEBUG_ENIGMA_TEST = true in browser console to run a quick verification
+window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['order2','order1','order0'], grundSelector = ['g2','g1','g0'], ringSelector = ['r2','r1','r0']) {
+    try {
+        const order = orderSelector.map(id => parseInt(document.getElementById(id).value));
+        const grund = grundSelector.map(id => document.getElementById(id).value);
+        const ring  = ringSelector.map(id => document.getElementById(id).value);
+
+        const enc = enigmaEncrypt(text, order, grund, ring);
+        const dec = enigmaEncrypt(enc, order, grund, ring);
+
+        console.log('Enigma round-trip test', { text, enc, dec, ok: dec === text.toUpperCase() });
+        return {text, enc, dec, ok: dec === text.toUpperCase()};
+    } catch (err) {
+        console.warn('enigmaRoundTripTest failed:', err);
+        return null;
+    }
+};
 
     });
 
@@ -2416,6 +2437,19 @@ function letterToRotorPos(letter) {
     initializeSPA();
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
+
+    // Developer helper: automatically run enigma round-trip test if flag is set
+    if (window.DEBUG_ENIGMA_TEST) {
+        try {
+            const res = window.enigmaRoundTripTest('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+            console.log('DEBUG_ENIGMA_TEST result:', res);
+            if (res && !res.ok) {
+                console.warn('Enigma round-trip failed in automatic test — check mapping/rotors/plugboard');
+            }
+        } catch (e) {
+            console.warn('DEBUG_ENIGMA_TEST failed to execute:', e);
+        }
+    }
 
    /*
     //Testowanie alfabetu
