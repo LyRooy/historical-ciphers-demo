@@ -69,7 +69,6 @@ export function exportToPDF({ method, input, output, shift, author }) {
   doc.save("raport_szyfrowania.pdf");
 }
 ```
-
 ------------------------------------------------------------------------
 
 ## Krok 3 --- Eksport sekcji strony (HTML + CSS)
