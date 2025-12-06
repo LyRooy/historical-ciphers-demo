@@ -36,15 +36,19 @@ odczytywane wierszami.
 -   Zdecyduj, czy zachować wielkość liter i znaki interpunkcyjne.\
 -   Uruchom proces i odczytaj wynik w polu wyjściowym programu.
 
- Eksport do pliku tekstowego
+ Eksport do pliku 
+ - W projekcie eksport obsługuje tylko wyniki szyfrowania/odszyfrowywania.
+ - Dostępne formy eksportu (sekcja „Wynik”):
+  - **Eksport TXT** — pobiera plik tekstowy z raportem: metadane (typ operacji, szyfr, data), tekst wejściowy, ustawienia (np. liczba szyn, offset), wynik oraz opis wizualizacji (jeśli wygenerowano).
+  - **Eksport PDF** — próbuje wykonać snapshot wizualizacji i zapisać go jako PDF (biblioteka html2pdf). Jeśli snapshot nie jest możliwy → fallback do prostego PDF‑u tekstowego (jsPDF).
 
--   Skopiuj wynik szyfrowania lub odszyfrowania.\
--   Otwórz Notatnik lub dowolny edytor tekstu.\
--   Wklej zawartość.\
--   Wybierz „Plik → Zapisz jako...".\
--   Nadaj nazwę, np. wynik_plotowy.txt.\
--   Ustaw kodowanie UTF-8.\
--   Zapisz plik.
+ Jak wyeksportować (użytkownik)
+ - Zaszyfruj/odszyfruj tekst w aplikacji.  
+ - (Opcjonalnie) Wygeneruj wizualizację, jeśli chcesz mieć ją w raporcie.  
+ - W sekcji „Wynik”:
+   - Kliknij **Eksport TXT** — pobierze plik `.txt` z raportem.  
+   - Kliknij **Eksport PDF** — wygeneruje PDF (snapshot UI jeśli dostępny).  
+   - Kliknij ikonę kopiowania, aby skopiować wynik do schowka.  
 
  Dodatkowe wskazówki
 
