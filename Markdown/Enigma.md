@@ -46,15 +46,20 @@ Zasady użytkowania
 -   Uruchom proces, po którym wynik pojawi się w polu wyjściowym
     programu.
 
-Eksport do pliku tekstowego
+Eksport wyników — co się eksportuje 
+- Tylko wyniki szyfrowania/odszyfrowywania (brak eksportu quizów).
+- Metadane: typ operacji, szyfr, timestamp.
+- Tekst wejściowy i tekst wynikowy.
+- Ustawienia maszyny (order, grundstellung, ringstellung, plugboard).
+- Wizualizacja krok‑po‑kroku Enigmy 
+- Analiza częstości: nie dotyczy Enigmy (dotyczy głównie Cezara/Vigenère) — nie jest standardowo dołączana.
 
--   Skopiuj wynik działania maszyny.\
--   Otwórz edytor tekstu, taki jak Notatnik.\
--   Wklej zaszyfrowany lub odszyfrowany tekst.\
--   Zapisz plik jako enigma_wynik.txt lub inną nazwę.\
--   Wybierz kodowanie UTF-8, aby zachować kompatybilność z polskimi
-    znakami (jeśli używane są nowoczesne transliteracje).\
--   Zapisz plik.
+Jak wyeksportować (użytkownik)
+1. Wykonaj szyfrowanie/odszyfrowanie w aplikacji.  
+2. W sekcji „Wynik”:
+   - kliknij „Eksport TXT” → pobierze się plik `.txt` z raportem (tekst, ustawienia, wynik, ewentualna wizualizacja w formie opisowej),
+   - kliknij „Eksport PDF” → aplikacja spróbuje zrobić snapshot wizualizacji (html2pdf). Jeśli snapshot się nie powiedzie, powstanie prosty PDF tekstowy (fallback),
+   - lub kliknij ikonę kopiowania, by skopiować wynik do schowka.  
 
 Dodatkowe wskazówki
 
