@@ -32,15 +32,22 @@ Zasady użytkowania
     interpunkcję.
 -   Uruchom proces i odczytaj wynik w polu wyjściowym programu.
 
-Eksport do pliku tekstowego
+Eksport wyników
+- Eksport dotyczy WYŁĄCZNIE wyników szyfrowania/odszyfrowywania.  
+- Co trafia do eksportu:
+  - metadane (operacja, szyfr, timestamp),
+  - tekst wejściowy i wynik,
+  - ustawienia (użyty klucz),
+  - wizualizacja krok‑po‑kroku (jeśli wygenerowana) 
+  - analiza częstości (DOŁĄCZANA TYLKO JEŚLI użytkownik ją **kliknął** przed eksportem).
+- Implementacja: `export.js` (przyciski `#export-txt`, `#export-pdf`). Dane pobierane z `window.getLastAction()` (z `script.js`).
 
--   Skopiuj wynik szyfrowania.
--   Otwórz Notatnik lub inny edytor tekstu.
--   Wklej zawartość.
--   Wybierz polecenie „Plik → Zapisz jako...".
--   Nadaj nazwę, np. wynik_vigenere.txt.
--   Ustaw kodowanie UTF‑8.
--   Zapisz plik.
+Jak wyeksportować (użytkownik)
+- Zaszyfruj/odszyfruj tekst.
+- (Opcjonalnie) Kliknij „Dokonaj analizy częstości” → wtedy analiza zostanie zapisana i dołączona do eksportu.  
+-W sekcji Wynik:
+   - Kliknij **Eksport TXT** → pobierze się plik `.txt` z raportem.  
+   - Kliknij **Eksport PDF** → aplikacja spróbuje snapshotu wizualizacji (html2pdf); jeśli nie, użyje prostego PDF (jsPDF).  
 
 Dodatkowe wskazówki
 
