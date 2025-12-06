@@ -47,7 +47,7 @@ Zasady użytkowania
     programu.
 
 Eksport wyników — co się eksportuje 
-- Tylko wyniki szyfrowania/odszyfrowywania (brak eksportu quizów).
+- Tylko wyniki szyfrowania/odszyfrowywania.
 - Metadane: typ operacji, szyfr, timestamp.
 - Tekst wejściowy i tekst wynikowy.
 - Ustawienia maszyny (order, grundstellung, ringstellung, plugboard).
