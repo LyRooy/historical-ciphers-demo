@@ -3,8 +3,7 @@
 ## Cel
 
 Umożliwienie użytkownikowi zapisywania wyników szyfrowania lub
-deszyfrowania, wizualizacji oraz analizy częstości (dla szyfrów Cezara i
-Vigenère), w formacie PDF --- **bez konieczności użycia backendu**.
+deszyfrowania, wizualizacji oraz analizy częstości , w formacie PDF 
 
 Eksport odbywa się w całości po stronie przeglądarki za pomocą
 bibliotek:
