@@ -16,7 +16,6 @@ Jak korzystać — instrukcja dla użytkownika
 3. W sekcji „Wynik”:
    - kliknij „Eksport TXT” → pobierze się plik .txt z raportem,
    - kliknij „Eksport PDF” → aplikacja spróbuje wygenerować PDF zawierający snapshot wizualizacji (jeśli możliwe); w razie problemów powstanie prosty PDF tekstowy,
-   - kliknij przycisk kopiowania, aby skopiować wynik do schowka.
 
 
 Bezpieczeństwo — sanitizacja HTML
