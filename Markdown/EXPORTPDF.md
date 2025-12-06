@@ -19,15 +19,11 @@ bibliotek:
 
 W terminalu projektu uruchom:
 
-``` bash
 npm install jspdf
-```
+``
 
-lub --- jeśli chcesz eksportować sekcje HTML ze stylami:
-
-``` bash
 npm install html2pdf.js
-```
+
 
 ------------------------------------------------------------------------
 
