@@ -20,10 +20,8 @@ bibliotek:
 W terminalu projektu uruchom:
 
 npm install jspdf
-``
 
 npm install html2pdf.js
-
 
 ------------------------------------------------------------------------
 
@@ -68,7 +66,7 @@ export function exportToPDF({ method, input, output, shift, author }) {
 
   doc.save("raport_szyfrowania.pdf");
 }
-```
+
 ------------------------------------------------------------------------
 
 ## Krok 3 --- Eksport sekcji strony (HTML + CSS)
@@ -96,7 +94,6 @@ export function exportSectionToPDF() {
 
   html2pdf().set(options).from(element).save();
 }
-```
 
 ### Przykładowy HTML
 
@@ -109,7 +106,6 @@ export function exportSectionToPDF() {
 </div>
 
 <button onclick="exportSectionToPDF()">Pobierz PDF</button>
-```
 
 ------------------------------------------------------------------------
 
@@ -122,14 +118,13 @@ doc.setProperties({
   subject: "Wyniki szyfrowania",
   author: "Aplikacja Szyfry Web",
 });
-```
 
 ### ✔ Zachowaj czytelność dokumentu
 
 -   stosuj krótkie linie tekstu,
 -   używaj odpowiednich marginesów,
--   testuj polskie znaki (UTF‑8),
--   w html2pdf.js skaluj `html2canvas` dla ostrego eksportu wykresów.
+-   testuj polskie znaki (UTF-8),
+-   w html2pdf.js skaluj html2canvas dla ostrego eksportu wykresów.
 
 ------------------------------------------------------------------------
 
@@ -150,7 +145,7 @@ Do prostych logów i raportów tekstowych możesz wciąż używać **jsPDF**.
 
 ## Gotowe do integracji
 
-Zastępujesz stary moduł `ExportPDF` --- teraz eksport obejmuje:
+Zastępujesz stary moduł ExportPDF --- teraz eksport obejmuje:
 
 -   wynik szyfrowania/deszyfrowania,
 -   wizualizację procesu,
