@@ -1,100 +1,167 @@
-Instrukcja: Eksport do pliku PDF w aplikacji webowej
-Cel
+# Instrukcja: Eksport do pliku PDF w aplikacji webowej
 
-Umożliwienie użytkownikowi zapisywania wyników szyfrowania, wizualizacji lub quizu w formacie PDF, bez potrzeby użycia backendu.
-Funkcjonalność realizowana po stronie przeglądarki przy użyciu bibliotek:
-jsPDF lub html2pdf.js.
+## Cel
 
-Krok 1 — Instalacja biblioteki
+Umożliwienie użytkownikowi zapisywania wyników szyfrowania lub
+deszyfrowania, wizualizacji oraz analizy częstości (dla szyfrów Cezara i
+Vigenère), w formacie PDF --- **bez konieczności użycia backendu**.
+
+Eksport odbywa się w całości po stronie przeglądarki za pomocą
+bibliotek:
+
+-   **jsPDF** --- idealny dla prostych raportów tekstowych,
+-   **html2pdf.js** --- najlepszy do eksportowania sekcji HTML
+    (wizualizacji, analiz, wyników szyfrowania).
+
+------------------------------------------------------------------------
+
+## Krok 1 --- Instalacja wymaganych bibliotek
 
 W terminalu projektu uruchom:
 
+``` bash
 npm install jspdf
+```
 
+lub --- jeśli chcesz eksportować sekcje HTML ze stylami:
 
-lub — jeśli chcesz eksportować całe sekcje HTML (ze stylami CSS):
-
+``` bash
 npm install html2pdf.js
+```
 
-Krok 2 — Eksport prostego raportu (tekstowego)
-Przykład (JavaScript / React)
+------------------------------------------------------------------------
+
+## Krok 2 --- Eksport prostego raportu (tekstowego)
+
+Używane, gdy chcesz zapisać np. wynik szyfrowania/deszyfrowania bez
+grafiki i bez stylów HTML.
+
+### Przykład (JavaScript / React)
+
+``` javascript
 import jsPDF from "jspdf";
 
-export function exportToPDF() {
+export function exportToPDF({ method, input, output, shift, author }) {
   const doc = new jsPDF();
 
-  // Nagłówek dokumentu
   doc.setFontSize(18);
   doc.text("Raport szyfrowania", 20, 20);
 
-  // Treść
   doc.setFontSize(12);
-  doc.text("Szyfr: Cezara (+3)", 20, 40);
-  doc.text("Tekst jawny: ALA MA KOTA", 20, 50);
-  doc.text("Szyfrogram: DOD PD NRWD", 20, 60);
-  doc.text("Autor: Jan Kowalski", 20, 80);
+  doc.text(`Metoda: ${method}`, 20, 40);
 
-  // Zapis pliku
+  if (method === "Cezar") {
+    doc.text(`Przesunięcie: ${shift}`, 20, 50);
+    doc.text(`Tekst jawny: ${input}`, 20, 60);
+    doc.text(`Szyfrogram: ${output}`, 20, 70);
+  }
+
+  if (method === "Vigenere") {
+    doc.text(`Klucz: ${shift}`, 20, 50);
+    doc.text(`Tekst jawny: ${input}`, 20, 60);
+    doc.text(`Szyfrogram: ${output}`, 20, 70);
+  }
+
+  doc.text(`Autor: ${author}`, 20, 90);
+
+  doc.setProperties({
+    title: "Raport szyfrowania",
+    subject: "Wyniki użytkownika",
+    author: "Aplikacja Szyfry Web",
+    keywords: "szyfrowanie, kryptografia, Cezar, Vigenere",
+  });
+
   doc.save("raport_szyfrowania.pdf");
 }
+```
 
+------------------------------------------------------------------------
 
-Wynik: w przeglądarce automatycznie pobierze się plik raport_szyfrowania.pdf.
+## Krok 3 --- Eksport sekcji strony (HTML + CSS)
 
-Krok 3 — Eksport fragmentu strony (HTML + CSS)
+Używane, gdy chcesz pobrać:
 
-Jeśli chcesz zapisać widok aplikacji (np. quiz, wizualizację, raport) jako PDF — użyj html2pdf.js.
+-   wizualizację szyfrowania,
+-   wykres analizy częstości Cezara/Vigenère,
+-   pełny raport renderowany w UI aplikacji.
 
-Przykład:
+### Przykład:
+
+``` javascript
 import html2pdf from "html2pdf.js";
 
 export function exportSectionToPDF() {
   const element = document.getElementById("export-section");
+
   const options = {
     margin: 10,
-    filename: "quiz_wynik.pdf",
+    filename: "raport_szyfrowania.pdf",
     image: { type: "jpeg", quality: 0.98 },
     html2canvas: { scale: 2 },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
   };
+
   html2pdf().set(options).from(element).save();
 }
+```
 
-HTML przykład:
+### Przykładowy HTML
+
+``` html
 <div id="export-section">
-  <h2>Wynik quizu</h2>
-  <p>Użytkownik: Anna Nowak</p>
-  <p>Poprawne odpowiedzi: 8/10</p>
+  <h2>Raport szyfrowania</h2>
+  <p>Metoda: Cezar (+3)</p>
+  <p>Tekst jawny: ALA MA KOTA</p>
+  <p>Szyfrogram: DOD PD NRWD</p>
+  <div id="frequency-chart"></div>
 </div>
 
 <button onclick="exportSectionToPDF()">Pobierz PDF</button>
+```
 
-Krok 4 — Dobre praktyki
+------------------------------------------------------------------------
 
-Dodaj tytuł i metadane PDF-a:
+## Krok 4 --- Dobre praktyki
 
+### ✔ Dodaj metadane PDF-a
+
+``` javascript
 doc.setProperties({
-  title: "Raport szyfrowania",
-  subject: "Wyniki użytkownika",
+  title: "Raport",
+  subject: "Wyniki szyfrowania",
   author: "Aplikacja Szyfry Web",
-  keywords: "szyfrowanie, edukacja, kryptografia",
 });
+```
 
+### ✔ Zachowaj czytelność dokumentu
 
-Zachowaj czytelność PDF-a:
+-   stosuj krótkie linie tekstu,
+-   używaj odpowiednich marginesów,
+-   testuj polskie znaki (UTF‑8),
+-   w html2pdf.js skaluj `html2canvas` dla ostrego eksportu wykresów.
 
-krótkie linie tekstu,
+------------------------------------------------------------------------
 
-odpowiednie marginesy,
+## Podsumowanie
 
-testowanie polskich znaków (UTF-8).
+### Rekomendacja dla Twojej aplikacji szyfrów:
 
-Krok 5 — Alternatywy
-Biblioteka	Zastosowanie	Zalety	Wady
-jsPDF	Teksty i proste raporty	Lekka, łatwa w obsłudze	Małe możliwości stylowania
-html2pdf.js	Eksport wyglądu strony (HTML + CSS)	Zachowuje styl	Wolniejsza przy dużych stronach
-pdfmake	Raporty edukacyjne, quizy	Obsługuje tabele i polskie znaki	Wymaga konfiguracji layoutu
-Podsumowanie
+Użyj **html2pdf.js**, ponieważ:
 
-Rekomendacja:
-Do projektu edukacyjnego szyfrów zastosuj html2pdf.js – pozwala eksportować wizualizacje, raporty i quizy w formie zgodnej z widokiem aplikacji.
+-   eksportuje wizualizacje (wykresy),
+-   zachowuje układ UI,
+-   pozwala zapisać kompletny raport szyfrowania/deszyfrowania oraz
+    analizę częstości --- dokładnie to, czego potrzebuje aplikacja.
+
+Do prostych logów i raportów tekstowych możesz wciąż używać **jsPDF**.
+
+------------------------------------------------------------------------
+
+## Gotowe do integracji
+
+Zastępujesz stary moduł `ExportPDF` --- teraz eksport obejmuje:
+
+-   wynik szyfrowania/deszyfrowania,
+-   wizualizację procesu,
+-   analizę częstości (jeśli użytkownik ją wyświetlił),
+-   pełny wygląd sekcji UI dzięki html2pdf.js.
