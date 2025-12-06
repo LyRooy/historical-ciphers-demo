@@ -55,8 +55,8 @@ Eksport wyników — co się eksportuje
 - Analiza częstości: nie dotyczy Enigmy (dotyczy głównie Cezara/Vigenère) — nie jest standardowo dołączana.
 
 Jak wyeksportować (użytkownik)
-1. Wykonaj szyfrowanie/odszyfrowanie w aplikacji.  
-2. W sekcji „Wynik”:
+- Wykonaj szyfrowanie/odszyfrowanie w aplikacji.  
+- W sekcji „Wynik”:
    - kliknij „Eksport TXT” → pobierze się plik `.txt` z raportem (tekst, ustawienia, wynik, ewentualna wizualizacja w formie opisowej),
    - kliknij „Eksport PDF” → aplikacja spróbuje zrobić snapshot wizualizacji (html2pdf). Jeśli snapshot się nie powiedzie, powstanie prosty PDF tekstowy (fallback),
    - lub kliknij ikonę kopiowania, by skopiować wynik do schowka.  
