@@ -34,7 +34,6 @@ grafiki i bez stylów HTML.
 
 ### Przykład (JavaScript / React)
 
-``` javascript
 import jsPDF from "jspdf";
 
 export function exportToPDF({ method, input, output, shift, author }) {
@@ -83,7 +82,6 @@ Używane, gdy chcesz pobrać:
 
 ### Przykład:
 
-``` javascript
 import html2pdf from "html2pdf.js";
 
 export function exportSectionToPDF() {
@@ -103,7 +101,6 @@ export function exportSectionToPDF() {
 
 ### Przykładowy HTML
 
-``` html
 <div id="export-section">
   <h2>Raport szyfrowania</h2>
   <p>Metoda: Cezar (+3)</p>
@@ -121,7 +118,6 @@ export function exportSectionToPDF() {
 
 ### ✔ Dodaj metadane PDF-a
 
-``` javascript
 doc.setProperties({
   title: "Raport",
   subject: "Wyniki szyfrowania",
