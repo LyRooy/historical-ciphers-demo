@@ -111,7 +111,7 @@ export function exportSectionToPDF() {
 
 ## Krok 4 --- Dobre praktyki
 
-### ✔ Dodaj metadane PDF-a
+ Dodaj metadane PDF-a
 
 doc.setProperties({
   title: "Raport",
@@ -119,7 +119,7 @@ doc.setProperties({
   author: "Aplikacja Szyfry Web",
 });
 
-### ✔ Zachowaj czytelność dokumentu
+ Zachowaj czytelność dokumentu
 
 -   stosuj krótkie linie tekstu,
 -   używaj odpowiednich marginesów,
