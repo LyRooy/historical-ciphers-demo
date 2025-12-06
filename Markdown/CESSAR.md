@@ -38,18 +38,16 @@ Gdzie znajduje się eksport w projekcie
 - Dane do eksportu pobierane są z `window.getLastAction()` (ustawiane przez `script.js`).
 
 Jak wyeksportować wynik (instrukcja użytkownika)
-1. Wykonaj operację w aplikacji:
+  - Wykonaj operację w aplikacji:
    - wybierz szyfr Cezara,
    - wprowadź tekst i ustaw klucz,
    - kliknij „Zaszyfruj” lub „Odszyfruj”.
-2. (Opcjonalnie) Jeśli chcesz, aby raport zawierał analizę częstości:
+  - (Opcjonalnie) Jeśli chcesz, aby raport zawierał analizę częstości:
    - kliknij przycisk „Dokonaj analizy częstości” w panelu Wynik.
-3. W sekcji „Wynik”:
+  - W sekcji „Wynik”:
    - kliknij „Eksport TXT” — pobierze się plik `.txt` zawierający raport (tekst, ustawienia, opcjonalnie kroki i analiza),
    - kliknij „Eksport PDF” — aplikacja spróbuje wygenerować PDF zawierający snapshot wizualizacji (jeżeli dostępna). Jeśli snapshot się nie uda, PDF powstanie jako prosty dokument tekstowy (fallback),
-   - kliknij ikonę kopiowania, aby skopiować wynik bezpośrednio do schowka.
-4. Po pobraniu:
-   - otwórz plik w edytorze tekstu (np. VS Code, Notepad++ lub Notatnik) i sprawdź zawartość.
+
 
 
 DODATKOWE WSKAZÓWKI
