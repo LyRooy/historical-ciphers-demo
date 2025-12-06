@@ -25,17 +25,32 @@ Wynik pojawi się w polu wyjściowym programu lub w oknie podglądu.
 
 PROSTY EKSPORT DO PLIKU TEKSTOWEGO
 
-Po zakończeniu szyfrowania użytkownik może zapisać wynik w pliku tekstowym, korzystając z prostych kroków:
+Co aplikacja eksportuje 
+- Tylko wyniki szyfrowania / odszyfrowywania oraz powiązane dane:
+  - metadane (typ operacji, nazwa szyfru, timestamp),
+  - tekst wejściowy i tekst wynikowy,
+  - ustawienia szyfru (np. przesunięcie),
+  - wizualizacja krok‑po‑kroku (jeśli została wygenerowana),
+  - analiza częstości (TylKO jeśli użytkownik ją uruchomił przed eksportem).
 
-1. Skopiuj wynik szyfrowania z programu.
-2. Otwórz Notatnik lub inny edytor tekstu.
-3. Wklej zaszyfrowany tekst.
-4. Wybierz „Plik” → „Zapisz jako…”.
-5. Wpisz nazwę pliku, np. wynik_cezara.txt.
-6. Wybierz kodowanie UTF-8, aby zachować polskie znaki.
-7. Kliknij „Zapisz”.
+Gdzie znajduje się eksport w projekcie
+- Logika eksportu: `export.js`
+- Dane do eksportu pobierane są z `window.getLastAction()` (ustawiane przez `script.js`).
 
-Po zapisaniu pliku można go ponownie otworzyć w Notatniku, aby zobaczyć lub skopiować zaszyfrowany tekst.
+Jak wyeksportować wynik (instrukcja użytkownika)
+1. Wykonaj operację w aplikacji:
+   - wybierz szyfr Cezara,
+   - wprowadź tekst i ustaw klucz,
+   - kliknij „Zaszyfruj” lub „Odszyfruj”.
+2. (Opcjonalnie) Jeśli chcesz, aby raport zawierał analizę częstości:
+   - kliknij przycisk „Dokonaj analizy częstości” w panelu Wynik.
+3. W sekcji „Wynik”:
+   - kliknij „Eksport TXT” — pobierze się plik `.txt` zawierający raport (tekst, ustawienia, opcjonalnie kroki i analiza),
+   - kliknij „Eksport PDF” — aplikacja spróbuje wygenerować PDF zawierający snapshot wizualizacji (jeżeli dostępna). Jeśli snapshot się nie uda, PDF powstanie jako prosty dokument tekstowy (fallback),
+   - kliknij ikonę kopiowania, aby skopiować wynik bezpośrednio do schowka.
+4. Po pobraniu:
+   - otwórz plik w edytorze tekstu (np. VS Code, Notepad++ lub Notatnik) i sprawdź zawartość.
+
 
 DODATKOWE WSKAZÓWKI
 - Dla uproszczenia można przygotować formularz z polem tekstowym, miejscem na wpisanie klucza i przyciskiem „Zapisz wynik”.
