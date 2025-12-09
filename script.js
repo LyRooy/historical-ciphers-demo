@@ -3192,7 +3192,7 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
             if (page === 'DOCUMENTATION') {
                 // combine README + specified pages
                 md += (window.mdPages && window.mdPages.README) ? window.mdPages.README + '\n\n---\n\n' : '';
-                const extras = ['Analiza_częstości_i_słabości_klasycznych_szyfrów','Szyfr_Cezara','VIGENERE','PLOTOWY','ENIGMA'];
+                const extras = ['Analiza_częstości_i_słabości_klasycznych_szyfrów','Szyfr_Cezara','Szyfr_Vigenère','Szyfr_Płotowy','Uproszczony_model_Enigmy'];
                 extras.forEach(k => {
                     if (window.mdPages && window.mdPages[k]) {
                         md += `## ${k}\n\n` + window.mdPages[k] + '\n\n---\n\n';
