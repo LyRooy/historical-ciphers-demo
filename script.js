@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const outputText = document.querySelector('.output-text');
     const copyBtn = document.getElementById('copy-btn');
     const resetBtn = document.getElementById('reset-btn');
-    // Documentation panel elements (embedded docs from md-pages.js)
+    // Elementy panelu dokumentacji (osadzone docs z md-pages.js)
     const docsPanelSection = document.querySelector('.docs-panel-section');
     const docsPanel = document.getElementById('docs-panel');
     const docsTitle = document.getElementById('docs-title');
@@ -53,14 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // =====================================================
     // TYDZIEŃ 10: Analiza częstotliwości
     // =====================================================
-    // Last encryption/decryption action (used for export)
-    // Structure: { type: 'encrypt'|'decrypt', cipher: 'caesar'|'vigenere'|'railfence'|'enigma', input: string, settings: object, visualization: Array, output: string, timestamp }
+    // Ostatnia akcja szyfrowania/deszyfrowania (używana do eksportu)
+    // Struktura: { type: 'encrypt'|'decrypt', cipher: 'caesar'|'vigenere'|'railfence'|'enigma', input: string, settings: object, visualization: Array, output: string, timestamp }
     let lastAction = null;
 
-    // Expose getter/setter so other modules (export.js) can access/update lastAction
+    // Udostępnij getter/setter aby inne moduły (export.js) mogły uzyskać/zaktualizować lastAction
     function setLastAction(action) {
         lastAction = action;
-        // Keep a window-level copy for simple console debugging as well
+        // Utrzymuj kopię na poziomie okna również dla prostego debugowania w konsoli
         window.__lastAction = lastAction;
     }
 
@@ -71,26 +71,26 @@ document.addEventListener('DOMContentLoaded', () => {
     window.getLastAction = getLastAction;
     window.setLastAction = setLastAction;
 
-    // Frequency analysis UI elements (next to output)
+    // Elementy interfejsu analizy częstości (obok wyjścia)
     const freqControls = document.querySelector('.freq-analysis-controls');
     const freqBtn = document.getElementById('freq-analysis-btn');
     const freqCloseBtn = document.getElementById('freq-analysis-close');
     const freqPanel = document.getElementById('freq-analysis-panel');
 
-    // Show/hide helper
+    // Funkcja pomocnicza do pokazania/ukrycia
     function showFrequencyUI(show) {
         if (!freqControls) return;
         freqControls.style.display = show ? 'block' : 'none';
         if (!show && freqPanel) freqPanel.style.display = 'none';
     }
 
-    // Compute raw counts of letters using the full Polish alphabet
+    // Oblicz surowe liczniki liter używając pełnego polskiego alfabetu
     function computeCounts(text) {
         if (!text) return { total: 0, counts: {} };
         const counts = {};
         let total = 0;
         for (let ch of text) {
-            if (ch === ' ') continue; // skip spaces
+            if (ch === ' ') continue; // pomiń spacje
             const lower = ch.toLowerCase();
             if (POLISH_LOWER.includes(lower)) {
                 counts[lower] = (counts[lower] || 0) + 1;
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return { total, counts };
     }
 
-    // Convert counts to percentage map
+    // Konwertuj liczniki na mapę procentów
     function countsToPercent(countsMap, total) {
         const result = {};
         for (const ch of POLISH_LOWER) {
@@ -110,42 +110,42 @@ document.addEventListener('DOMContentLoaded', () => {
         return result;
     }
 
-    // Escape html helper reused from export.js but local copy for small UI
+    // Funkcja ucieczki HTML ponownie użyta z export.js ale lokalna kopia dla małego interfejsu
     function escapeHtmlLocal(str) {
         if (str === undefined || str === null) return '';
         return String(str).replace(/[&<>'"]/g, (m) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[m]);
     }
 
-    // Approximate expected Polish letter frequencies (percent) — used for comparison
+    // Przybliżone oczekiwane częstości polskich liter (procent) — używane do porównania
     const POLISH_EXPECTED_FREQ = {
         a:8.91, ą:0.99, b:1.47, c:3.96, ć:0.40, d:3.25, e:7.66, ę:1.11, f:0.30, g:1.42, h:1.08, i:8.21, j:2.28,
         k:3.51, l:2.10, ł:2.09, m:2.80, n:5.52, ń:0.20, o:7.75, ó:0.85, p:3.13, q:0.01, r:4.69, s:4.32, ś:0.66,
         t:3.98, u:2.50, v:0.04, w:4.65, x:0.04, y:4.26, z:5.64, ź:0.06, ż:0.54
     };
 
-    // Caesar analysis: determine best shift by correlating ciphertext freq with expected plain freq
+    // Analiza Cezara: określ najlepsze przesunięcie poprzez korelację częstości szyfrogramu z oczekiwaną częstością tekstu jawnego
     function analyzeCaesarByFrequency(action) {
         const cipherText = (action && action.output) ? action.output.toLowerCase().replace(/[^\p{L}]/gu, '') : '';
         const { total, counts } = computeCounts(cipherText);
         const cipherPercent = countsToPercent(counts, total);
 
-        // Build array of expected frequencies in order of POLISH_LOWER
+        // Zbuduj tablicę oczekiwanych częstości w kolejności POLISH_LOWER
         const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
-        // Build ciphertext vector in same order
+        // Zbuduj wektor szyfrogramu w tej samej kolejności
         const cipherVec = POLISH_LOWER.split('').map(ch => cipherPercent[ch] || 0);
 
-        // Use chi-squared statistic to score candidate shifts (lower is better)
+        // Użyj statystyki chi-kwadrat do punktowania kandydujących przesunięć (niższe jest lepsze)
         function chiSquaredScoreForShift(s) {
-            // For shift s, map expected plaintext frequency to expected ciphertext indices
+            // Dla przesunięcia s zmapuj oczekiwaną częstość tekstu jawnego na oczekiwane indeksy szyfrogramu
             // expectedCountAtCipherIndex[j] = total * expected[(j - s) mod N] / 100
             let chi2 = 0;
             for (let j = 0; j < ALPHABET_SIZE; j++) {
                 const plainIdx = (j - s + ALPHABET_SIZE) % ALPHABET_SIZE;
                 const expectedFreqPct = expected[plainIdx] || 0;
-                const expectedCount = (expectedFreqPct / 100) * Math.max(1, total); // avoid zero
+                const expectedCount = (expectedFreqPct / 100) * Math.max(1, total); // unikaj zera
                 const observedCount = counts[POLISH_LOWER[j]] || 0;
                 const diff = observedCount - expectedCount;
-                // protect against zero expected counts
+                // ochrona przed zerową oczekiwaną liczbą
                 chi2 += expectedCount > 0 ? (diff * diff) / expectedCount : 0;
             }
             return chi2;
@@ -156,12 +156,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const score = chiSquaredScoreForShift(s);
             scores.push({ shift: s, score });
         }
-        // lower chi-squared is better
+        // niższy chi-kwadrat jest lepszy
         scores.sort((a, b) => a.score - b.score);
 
         const best = scores[0];
 
-        // Use best shift as predicted decryption (apply shift as decryption key)
+        // Użyj najlepszego przesunięcia jako przewidywanego deszyfrowania (zastosuj przesunięcie jako klucz deszyfrowania)
         function applyShiftToText(text, shift) {
             const src = POLISH_LOWER + POLISH_UPPER;
             return text.split('').map(ch => {
@@ -174,14 +174,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }).join('');
         }
 
-        // produce top N candidates to be more informative for short texts
+        // wytworz top N kandydatów aby być bardziej informacyjnym dla krótkich tekstów
         const top = scores.slice(0, 5).map(s => ({ shift: s.shift, score: s.score, plain: applyShiftToText(action.output || '', s.shift) }));
         const predictedPlain = top.length ? top[0].plain : applyShiftToText(action.output || '', best.shift);
 
         return { total, counts, cipherPercent, best, scores, top, predictedPlain };
     }
 
-    // Vigenere analysis: if we have keyword length we analyze by columns, otherwise give overall freq
+    // Analiza Vigenère: jeśli mamy długość słowa kluczowego, analizujemy po kolumnach, w przeciwnym razie podajemy ogólną częstość
     function analyzeVigenereByFrequency(action) {
         const cipherText = (action && action.output) ? action.output.replace(/[^A-Za-zĄąĆćĘęŁłŃńÓóŚśŹźŻż]/g, '') : '';
         const { total, counts } = computeCounts(cipherText);
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const { total:colTotal, counts:colCounts } = computeCounts(col);
                 const colPercent = countsToPercent(colCounts, colTotal);
 
-                // For each column, compute best Caesar shift using chi-squared (lower is better)
+                // Dla każdej kolumny oblicz najlepsze przesunięcie Cezara przy użyciu chi-kwadrat (niższe jest lepsze)
                 const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
                 function chi2ForShiftColumn(s) {
                     let chi2 = 0;
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const colScores = [];
                 for (let s = 0; s < ALPHABET_SIZE; s++) colScores.push({ shift: s, score: chi2ForShiftColumn(s) });
-                // lower chi2 is better
+                // niższy chi2 jest lepszy
                 colScores.sort((a,b) => a.score - b.score);
                 const best = colScores[0];
 
@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Helper: Kasiski examination (find repeated substrings and distances)
+        // Funkcja pomocnicza: Badanie Kasiski'ego (znajdź powtarzające się podciągi i odległości)
         function kasiskiExamination(text, minSize = 3, maxSize = 6) {
             const clean = String(text || '').toUpperCase().replace(/[^A-ZĄĆĘŁŃÓŚŹŻ]/g, '');
             const sequences = {};
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
             Object.keys(sequences).forEach(seq => {
                 const occ = sequences[seq];
                 if (occ.length > 1) {
-                    // compute pairwise distances
+                    // oblicz odległości parami
                     const dists = [];
                     for (let i = 0; i < occ.length; i++) {
                         for (let j = i + 1; j < occ.length; j++) {
@@ -251,7 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // factor counts for distances
+            // liczniki czynników dla odległości
             const factorCounts = {};
             distances.forEach(d => {
                 for (let f = 2; f <= 30; f++) {
@@ -261,13 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // produce sorted probable lengths
+            // wytworz posortowane prawdopodobne długości
             const probable = Object.keys(factorCounts).map(k => ({ len: parseInt(k), count: factorCounts[k] })).sort((a,b) => b.count - a.count);
 
             return { repeated, distances, factorCounts, probable };
         }
 
-        // Index-of-coincidence (IC) for a single string
+        // Indeks zbieżności (IC) dla jednego ciągu
         function indexOfCoincidence(text) {
             const clean = String(text || '').toLowerCase().replace(/[^a-ząćęłńóśźż]/g, '');
             const freq = {};
@@ -285,18 +285,18 @@ document.addEventListener('DOMContentLoaded', () => {
             return num / (N * (N - 1));
         }
 
-        // If no keyword provided, run Kasiski + IC to propose lengths and try top candidates
+        // Jeśli nie podano słowa kluczowego, uruchom Kasiski + IC aby zaproponować długości i spróbuj top kandydatów
         let candidates = [];
         if (!keyword || keyword.length === 0) {
             const kas = kasiskiExamination(action.output || '', 3, 5);
             const overallIC = indexOfCoincidence(action.output || '');
 
-            // take top probable lengths from kasiski, and also include some lengths by IC guess (peak at average close to Polish ~0.06-0.07?)
+            // weź top prawdopodobne długości z kasiski, i również uwzględnij kilka długości z pomiaru IC (szczyt blisko średniej polskiej ~0.06-0.07?)
             const probableLens = kas.probable.slice(0, 6).map(p => p.len);
-            // Add 1..8 in case none found (small fallback)
+            // Dodaj 1..8 na wypadek gdyby nic nie zostało znalezione (małe znowu)
             const tryLens = [...new Set([...probableLens, 2,3,4,5,6,7,8])].slice(0, 6);
 
-            // For each candidate length, attempt to compute best shifts per column via chi2 and assemble predicted key
+            // Dla każdej kandydującej długości spróbuj obliczyć najlepsze przesunięcia na kolumnę poprzez chi2 i złóż przewidywany klucz
             tryLens.forEach(L => {
                 const perCol = [];
                 let totalScore = 0;
@@ -307,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     for (let j = i; j < ciphertext.length; j += L) col += ciphertext[j];
 
                     const { total:colTotal, counts:colCounts } = computeCounts(col);
-                    // chi2 for column, reuse expected
+                    // chi2 dla kolumny, ponownie użyj oczekiwanego
                     const expected = POLISH_LOWER.split('').map(ch => POLISH_EXPECTED_FREQ[ch] || 0);
                     function chi2Col(s) {
                         let chi2 = 0;
@@ -331,32 +331,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 const assembledKey = keyLetters.join('');
-                // decrypt candidate
+                // odszyfruj kandydata
                 const candidatePlain = assembledKey.length > 0 ? vigenereCipher(action.output || '', assembledKey, false) : '';
                 candidates.push({ length: L, score: totalScore, key: assembledKey, plaintext: candidatePlain, perCol });
             });
 
-            // sort candidates by score (lower better)
+            // sortuj kandydatów po wyniku (niższy lepszy)
             candidates.sort((a,b) => a.score - b.score);
 
             return { total, counts, cipherPercent, kasiski: kas, ic: overallIC, candidates };
         }
         let predictedKey = '';
         if (columns.length > 0) {
-            // Map best shifts into letter candidates (shift number => alphabet letter at that index)
+            // Zmapuj najlepsze przesunięcia na kandydatów liter (numer przesunięcia => litera alfabetu na tym indeksie)
             predictedKey = columns.map(col => {
                 const s = col.best.shift;
-                // Use uppercase Polish alphabet for key display
+                // Użyj wielkich liter polskiego alfabetu do wyświetlania klucza
                 return POLISH_UPPER[s % POLISH_UPPER.length] || '?';
             }).join('');
         }
 
-        // Build predicted plaintext using predictedKey (if available) so users can compare algorithm's guess with true plaintext
+        // Zbuduj przewidywany tekst jawny używając predictedKey (jeśli dostępny) aby użytkownicy mogli porównać domniemanie algorytmu z rzeczywistym tekstem jawnym
         let predictedPlain = '';
         if (predictedKey && predictedKey.length > 0) {
             predictedPlain = vigenereCipher(action.output, predictedKey, false);
         } else if (keyword && keyword.length > 0) {
-            // If we didn't compute a guessed key but real keyword exists in settings — show ground-truth decryption for reference
+            // Jeśli nie obliczyli\u015bmy domy\u015blanego klucza ale rzeczywisty klucz istnieje w ustawieniach — pokaż rzeczywiste deszyfrowanie jako odniesienie
             predictedPlain = vigenereCipher(action.output, keyword, false);
         }
 
@@ -365,11 +365,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderFreqAnalysisForAction(action) {
         if (!action) return 'Brak danych.';
-        // Build header
+        // Zbuduj nagłówek
         let html = `<div style="font-size:0.95rem;color:#333;">
             <div style="font-weight:700;margin-bottom:8px;">Analiza częstości — ${escapeHtmlLocal(action.cipher || '')}</div>`;
 
-        // Overall distribution
+        // Ogólny rozkład
         const { total, counts } = computeCounts(action.output || '');
         const percent = countsToPercent(counts, total);
 
@@ -389,13 +389,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         html += `</tbody></table></div>`;
 
-        // Caesar-specific analysis
+        // Analiza specyficzna dla Cezara
         if (action.cipher === 'caesar') {
                 const res = analyzeCaesarByFrequency(action);
                 html += `<div style="flex:1 1 340px;min-width:320px;padding-left:8px;">
                     <div style="font-weight:600;margin-bottom:6px;">Propozycja klucza (Cezar)</div>`;
 
-                // warn for short texts
+                // ostrzegaj dla krótkich tekstów
                 if (res.total < 20) {
                     html += `<div style="color:#a33;margin-bottom:8px;font-size:0.9rem;">Uwaga: analizowany tekst jest bardzo krótki (${res.total} znaków) — wyniki mogą być zawodne.</div>`;
                 }
@@ -411,13 +411,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>`;
         }
 
-        // Vigenere-specific analysis
+        // Analiza specyficzna dla Vigenère
         if (action.cipher === 'vigenere') {
             const res = analyzeVigenereByFrequency(action);
             html += `<div style="flex:1 1 380px;min-width:320px;padding-left:8px;">
                 <div style="font-weight:600;margin-bottom:6px;">Analiza dla Vigenère — wykrywanie klucza</div>`;
 
-            // If Kasiski/IC output exists (no keyword provided)
+            // Jeśli wyjście Kasiski/IC istnieje (nie podano słowa kluczowego)
             if (res.kasiski) {
                 html += `<div style='margin-bottom:8px;color:#333;'>
                     <div style='font-weight:700;margin-bottom:6px;'>Wyniki Kasiski</div>
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     html += `</div>`;
                 }
 
-                // probable lengths from factor counts
+                // prawdopodobne długości z liczników czynników
                 html += `<div style='margin-top:6px;margin-bottom:6px;font-weight:700;'>Sugerowane długości klucza (Kasiski)</div>`;
                 if (res.kasiski.probable && res.kasiski.probable.length) {
                     html += `<div style='margin-bottom:8px;'>${res.kasiski.probable.slice(0,6).map(p => `dł=${p.len} (count=${p.count})`).join(', ')}</div>`;
@@ -443,10 +443,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     html += `<div style='font-style:italic;color:#666;margin-bottom:8px;'>Brak silnych kandydatów (Kasiski)</div>`;
                 }
 
-                // show index of coincidence
-                html += `<div style='margin-top:6px;margin-bottom:8px;'><strong>Index of Coincidence (IC):</strong> ${res.ic.toFixed(4)} — (wartość bliższa 0.06–0.07 sugeruje naturalny język)</div>`;
+                // pokaż indeks zbieżności
+                html += `<div style='margin-top:6px;margin-bottom:8px;'><strong>Indeks zbieżności (IC):</strong> ${res.ic.toFixed(4)} — (wartość bliższa 0.06–0.07 sugeruje naturalny język)</div>`;
 
-                // show candidate keys produced by trying top lengths
+                // pokaż klucze kandydujące wytworzone przez spróbowanie top długości
                 if (res.candidates && res.candidates.length > 0) {
                     html += `<div style='font-weight:700;margin-bottom:6px;'>Najlepsze kandydatury klucza (próbne długości)</div>`;
                     res.candidates.slice(0,4).forEach((cand, idx) => {
@@ -455,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <div style='font-size:0.85rem;color:#444;margin-top:6px;'>Score χ²: ${cand.score.toFixed(2)} — przykładowe odszyfrowanie:</div>
                             <div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;margin-top:6px;border:1px solid #eee;'>${escapeHtmlLocal(cand.plaintext)}</div>`;
 
-                        // show per-column top shifts for the candidate to improve visibility
+                        // pokaż top przesunięcia per-kolumna dla kandydata aby ulepszyć widoczność
                         html += `<div style='margin-top:8px;font-size:0.85rem;color:#333;'>Top przesunięcia kolumnowe:</div><div style='display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;'>`;
                         cand.perCol.forEach(pc => {
                             const top = pc.top.slice(0,3).map(t => `+${t.shift}(${t.score.toFixed(1)})`).join(', ');
@@ -468,15 +468,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 html += `<div style='margin-top:6px;font-style:italic;color:#666;'>Wskazówka: Kasiski i IC to metody heurystyczne — najlepiej działają na dłuższych tekstach. Jeśli znany jest klucz, wpisz go w ustawieniach by porównać wynik z rzeczywistym odszyfrowaniem.</div>`;
             } else {
-                // keyword was present in settings — show detailed column analysis and predicted key/plaintext
+                // słowo kluczowe było obecne w ustawieniach — pokaż szczegółową analizę kolumny i przewidywany klucz/tekst jawny
                 html += `<div style='font-size:0.9rem;margin-bottom:6px;'>Długość klucza: ${res.columns.length} — aktualny klucz (przewidywany): <strong>${escapeHtmlLocal(res.predictedKey || '-')}</strong></div>`;
                 res.columns.forEach((col) => {
                     html += `<div style='margin-bottom:8px;border:1px solid #eee;padding:8px;border-radius:6px;background:#fff;'>
                         <div style='font-weight:700;margin-bottom:6px;'>Kolumna ${col.index+1} — znaki ${col.colTotal}</div>`;
-                    // show top 4 candidate shifts
+                    // pokaż top 4 kandydatów przesunięć
                     const top = col.colScores.slice(0,4);
                     html += `<div style='margin-bottom:6px;'>Top przesunięcia: ${top.map(t=>`+${t.shift} (${t.score.toFixed(2)})`).join(', ')}</div>`;
-                    // show best guess for this column (as key char)
+                    // pokaż najlepsze domniemanie dla tej kolumny (jako znak klucza)
                     const keyLetter = POLISH_UPPER[col.best.shift % POLISH_UPPER.length] || '?';
                     html += `<div>Najlepszy klucz (kolumna) → <strong>${keyLetter}</strong></div>`;
                     html += `</div>`;
@@ -491,9 +491,9 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `</div>`;
         }
 
-        html += `</div>`; // wrap
+        html += `</div>`; // zawijka
 
-        // Provide side-by-side comparison of cipher output and predicted plaintext (if available)
+        // Udostępnij porównanie obok siebie wyjścia szyfru i przewidywanego tekstu jawnego (jeśli dostępne)
         html += `<div style='margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;'>
             <div style='flex:1 1 300px;min-width:220px;'><div style='font-weight:700'>Zaszyfrowany tekst</div><div style='font-family:monospace;background:#fafafa;padding:8px;border-radius:6px;border:1px solid #eee;margin-top:6px;'>${escapeHtmlLocal(action.output || '')}</div></div>`;
 
@@ -507,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return html + '</div>';
     }
 
-    // Attach click handler for freq analysis button
+    // Dołącz obsługę kliknięcia dla przycisku analizy częstości
     if (freqBtn) {
         freqBtn.addEventListener('click', () => {
             const action = getLastAction();
@@ -516,22 +516,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // When user explicitly runs analysis, compute structured data and keep a persistent record
+            // Gdy użytkownik jawnie uruchomi analizę, oblicz dane strukturalne i utrzymaj trwały zapis
             const analyzed = (action.cipher === 'caesar') ? analyzeCaesarByFrequency(action) : analyzeVigenereByFrequency(action);
-            // render HTML for UI
+            // renderuj HTML dla interfejsu
             const html = renderFreqAnalysisForAction(action);
 
-            // store analysis in lastAction so export can include it later when requested
+            // przechowuj analizę w lastAction aby eksport mógł ją dołączyć później gdy zostanie poproszony
             const updated = Object.assign({}, action, { analysisClicked: true, analysisHtml: html, analysisData: analyzed });
             setLastAction(updated);
 
-            // show panel and ensure close button is visible
+            // pokaż panel i upewnij się że przycisk zamknięcia jest widoczny
             if (freqPanel.style.display === 'none' || !freqPanel.style.display) {
                 freqPanel.innerHTML = html;
                 freqPanel.style.display = 'block';
                 if (freqCloseBtn) freqCloseBtn.style.display = 'inline-block';
             } else {
-                // if already open, re-render with latest content
+                // jeśli już otwarty, renderuj ponownie z najnowszą zawartością
                 freqPanel.innerHTML = html;
                 freqPanel.style.display = 'block';
                 if (freqCloseBtn) freqCloseBtn.style.display = 'inline-block';
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Close analysis panel (do not clear 'analysisClicked' — exported data remains available since user ran the analysis)
+    // Zamknij panel analizy (nie czyść 'analysisClicked' — wyeksportowane dane pozostają dostępne ponieważ użytkownik uruchomił analizę)
     if (freqCloseBtn) {
         freqCloseBtn.addEventListener('click', () => {
             if (freqPanel) freqPanel.style.display = 'none';
@@ -591,7 +591,7 @@ function rotorPosToLetter(pos) {
 
 // ===== WIZUALIZACJA ENIGMY =====
 function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPositions = [0,0,0], isEncrypt = true) {
-    // Follow same flow as enigmaEncrypt so visualization matches algorithm output
+    // Podążaj za tym samym przepływem co enigmaEncrypt aby wizualizacja zgadzała się z wyjściem algorytmu
     spaState.visualizationSteps = [];
     let positions = [...initialPositions]; // right, middle, left
     const rings = [...ringPositions];
@@ -601,14 +601,14 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
         const ch = cleanInput[i];
         if (ch === ' ') continue;
         const positionsBefore = [...positions];
-        // Use the same stepping logic as the real enigma implementation (correct double-stepping)
+        // Użyj tej samej logiki kroku co rzeczywista implementacja enigmy (poprawne podwójne kroki)
         const notchesForOrder = order.map(i => NOTCHES[i]);
         step(positions, notchesForOrder);
         const positionsAfter = [...positions];
 
         let path = [];
 
-        // Apply plugboard on entry
+        // Zastosuj tablicę podstawienia przy wejściu
         const plugIn = PLUGBOARD[ch] || ch;
         let signal = toNum(plugIn);
 
@@ -620,17 +620,17 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
         // ETW (entry) - show letter after plugboard mapping
         path.push({ stage: 'ETW', input: plugIn, output: toChar(signal), pos: null });
         const rotorWiring = order.map(i => ROTORS[i]);
-        // forward through rotors (right -> left)
+        // przejście przez rotory (prawo -> lewo)
         for (let r = 0; r < 3; r++) {
             const beforeSignal = signal;
             signal = forward(signal, rotorWiring[r], positions[r], rings[r]);
             path.push({ stage: `${rotorDisplayNames[r]} (przód)`, input: toChar(beforeSignal), output: toChar(signal), pos: positions[r], rotorSlot: r });
         }
-        // Reflektor B
+        // Reflektor B (UKW-B)
         const reflected = toNum(UKW_B[signal]);
         path.push({ stage: 'Odbicie', input: toChar(signal), output: toChar(reflected), pos: null, reflected: true });
         signal = reflected;
-        // backward through rotors (left -> right)
+        // przejście wstecz przez rotory (lewo -> prawo)
         for (let r = 2; r >= 0; r--) {
             const beforeSignal = signal;
             signal = backward(signal, rotorWiring[r], positions[r], rings[r]);
@@ -1349,7 +1349,7 @@ window.updatePlugboardList = function() {
                 `;
     }
 
-    // --- Export helper: render all visualization steps as full HTML (used by export.js)
+    // --- Funkcja pomocnicza do eksportu: renderuj wszystkie kroki wizualizacji jako pełny HTML (używane przez export.js)
     function renderFullVisualizationHTML(action) {
         if (!action || !Array.isArray(action.visualization)) return '';
 
@@ -2566,7 +2566,7 @@ function letterToRotorPos(letter) {
         }
         
         clearVisualization();
-        // hide frequency analysis when resetting all
+        // ukryj analizę częstości podczas resetowania wszystkiego
         showFrequencyUI(false);
         showNotification('Pola zostały wyczyszczone', 'success');
     }
@@ -2609,7 +2609,7 @@ function letterToRotorPos(letter) {
             }
 
             //Zmiany w html dla wyboru szyfru
-            // Show/hide frequency analysis UI depending on selected cipher
+            // Pokazuj/ukrywaj interfejs analizy częstości w zależności od wybranego szyfru
             showFrequencyUI(currentCipher === 'caesar' || currentCipher === 'vigenere');
             // === SZYFR CEZARA ===
             if (currentCipher === 'caesar') {

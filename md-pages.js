@@ -1,7 +1,7 @@
 /* md-pages.js
-   Embedded markdown contents used during development
-   This file contains strings (raw markdown) for pages used by the app's docs panel.
-   Similar idea to quizes.js — simple static data included at build time (no fetch required).
+   Zawartość osadzonego markdowna używana podczas rozwoju
+   Ten plik zawiera łańcuchy znaków (surowy markdown) dla stron używanych przez panel docs aplikacji.
+   Podobny pomysł do quizes.js — proste dane statyczne zawarte w czasie budowy (nie wymaga fetch).
 */
 
 const mdPages = {
@@ -448,5 +448,5 @@ Dzięki rekonstrukcjom i symulatorom użytkownik może poznać działanie złoż
 `
 };
 
-// simple export so other scripts can reference mdPages from window
+// prosty eksport aby inne skrypty mogły odwołać się do mdPages z okna
 window.mdPages = mdPages;

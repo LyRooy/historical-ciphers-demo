@@ -1,9 +1,9 @@
-// md-viewer.js — lightweight Markdown viewer
-// Responsibilities:
-// - load Markdown files by path
-// - sanitize HTML (using DOMPurify if present)
-// - show modal/panel and support closing
-// - support composing README + multiple Markdown files for 'Documentation'
+// md-viewer.js — lekka przeglądarka Markdown
+// Funkcje:
+// - załaduj pliki Markdown po ścieżce
+// - oczyść HTML (używając DOMPurify jeśli obecny)
+// - pokaż modal/panel i obsługuj zamykanie
+// - obsługuj komponowanie README + wiele plików Markdown dla 'Dokumentacji'
 
 (function(){
     function isAvailable(id) { return document.getElementById(id) !== null; }
@@ -15,7 +15,7 @@
 
     function sanitizeHtml(html) {
         if (window.DOMPurify) return DOMPurify.sanitize(html);
-        return html; // best-effort (user should use a server in production)
+        return html; // starania bez wysiłku (użytkownik powinien używać serwera w produkcji)
     }
 
     function escapeHtml(str) {
@@ -56,12 +56,12 @@
             const md = await fetchText(path);
             const html = window.marked ? marked.parse(md) : DOMPurify ? DOMPurify.sanitize(md) : md;
             mdContent.innerHTML = sanitizeHtml(html);
-            // reveal close button if hidden
+            // odkryj przycisk zamknij jeśli ukryty
             if (mdClose) mdClose.style.display = 'inline-block';
-            // update history so people can bookmark
+            // zaktualizuj historię aby użytkownicy mogli dodać zakładkę
             try { history.replaceState(null, '', `#md=${encodeURIComponent(path)}`); } catch(e){}
         } catch (err){
-            // If running directly from file://, browsers block fetch (CORS) — give a friendly hint
+            // Jeśli uruchamiasz bezpośrednio z file://, przeglądarki blokują fetch (CORS) — daj przyjazną wskazówkę
             if (location.protocol === 'file:' || /Failed to fetch|net::ERR_FAILED|blocked by CORS|Cross origin requests/i.test(String(err.message || ''))) {
                 showLocalServerHint(mdContent, err);
             } else {
@@ -80,7 +80,7 @@
             for (const p of paths) {
                 try {
                     const txt = await fetchText(p);
-                    // add separator and filename header
+                    // dodaj separator i nagłówek nazwy pliku
                     parts.push(`## Plik: ${p}\n\n` + txt);
                 } catch (e) {
                     parts.push(`**Błąd ładowania ${p}: ${e.message}**\n`);
@@ -101,14 +101,14 @@
         }
     }
 
-    // wire css close
+    // okabluj zamknięcie css
     if (mdClose) mdClose.addEventListener('click', () => {
         if (viewer) viewer.style.display = 'none';
         mdClose.style.display = 'none';
-        // keep history as-is
+        // utrzymuj historię bez zmian
     });
 
-    // attach handlers to links with class md-link
+    // dołącz procedury obsługi do łączy z klasą md-link
     document.addEventListener('click', (ev) => {
         const el = ev.target.closest && ev.target.closest('.md-link');
         if (!el) return;
@@ -118,23 +118,23 @@
         if (mode === 'single') {
             loadMarkdown(md, el.textContent.trim());
         } else if (mode === 'docs') {
-            // docs: if data-extra attribute present, expected comma-separated list
+            // dokumenty: jeśli atrybut data-extra obecny, spodziewana się listy oddzielonej przecinkami
             const extras = el.dataset.extra ? el.dataset.extra.split(',').map(s=>s.trim()).filter(Boolean) : [];
-            // assemble README + extras
+            // montaż README + extras
             const readme = el.dataset.readme || 'README.md';
             const paths = [readme, ...extras];
             loadCombined(paths, el.textContent.trim());
         }
     });
 
-    // load from hash on page load
+    // załaduj z hash podczas ładowania strony
     document.addEventListener('DOMContentLoaded', () => {
         if (!location.hash) return;
         const raw = location.hash.slice(1);
         if (!raw.startsWith('md=')) return;
         const key = raw.slice(3);
         if (key === 'DOCUMENTATION') {
-            // if hash signals documentation, try README + standard extras
+            // jeśli hash sygnalizuje dokumentację, spróbuj README + standardowe dodatki
             const extras = ['Markdown/Sekcja i analiza szyfrow.md','Markdown/CESSAR.md','Markdown/Vigenere.md','Markdown/Plotowy.md','Markdown/Enigma.md'];
             loadCombined(['README.md', ...extras], 'Dokumentacja (łączona)');
         } else {

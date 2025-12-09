@@ -456,9 +456,9 @@ body.dark-mode .theme-toggle .moon-icon {
     to { transform: rotate(360deg); }
 }
 
-/* Frequency analysis UI */
+/* Interfejs analizy częstości */
 .freq-analysis-controls {
-    display: none; /* toggled from JS */
+    display: none; /* przełączane z JS */
 }
 
 #freq-analysis-btn {
@@ -2763,7 +2763,7 @@ body.dark-mode #docs-content pre {
 }
 
 /* ============================================
-   FREQUENCY ANALYSIS PANEL STYLES
+   STYLE PANELU ANALIZY CZĘSTOŚCI
    ============================================ */
 
 #freq-analysis-panel {
@@ -2794,7 +2794,7 @@ body.dark-mode #docs-content pre {
     transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-/* Override inline styles in frequency analysis panel for dark mode */
+/* Przesłoń style wstawione w panelu analizy częstości dla trybu ciemnego */
 #freq-analysis-panel [style*="background:#fafafa"],
 #freq-analysis-panel [style*="background:#fff"],
 #freq-analysis-panel [style*="background: #fafafa"],

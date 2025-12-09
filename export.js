@@ -1,20 +1,20 @@
  // =====================================================
 // TYDZIEŃ 9 Eksport wyników
 // =====================================================
-// export.js — moved from script.js
-// Responsible for TXT / PDF export UI handlers that use `window.getLastAction()` provided by script.js
+// export.js — przeniesiony z script.js
+// Odpowiada za obsługę interfejsu eksportu TXT / PDF, który używa `window.getLastAction()` dostarczanego przez script.js
 
 (function(){
-    // Local DOM references
+    // Lokalne odniesienia do DOM
     const outputTextEl = document.querySelector('.output-text');
 
     function getAction() {
         if (typeof window.getLastAction === 'function') return window.getLastAction();
-        // fallback to window.__lastAction if present
+        // powrót do window.__lastAction jeśli obecny
         return window.__lastAction || null;
     }
 
-    // Build readable export content
+    // Zbuduj czytelną zawartość eksportu
     function buildExportText(action) {
         if (!action) return 'Brak danych do eksportu\n\nNie wykonano żadnej operacji szyfrowania/odszyfrowywania.';
 
@@ -42,10 +42,10 @@
         lines.push(formatVisualizationSteps(action.visualization));
         lines.push('');
 
-        // Include frequency analysis text if user explicitly ran it
+        // Dołącz analizę częstości, jeśli użytkownik ją wyraźnie uruchomił
         if (action.analysisClicked && action.analysisData) {
             lines.push('Analiza częstości (wygenerowana przez aplikację):');
-            // For Caesar, list top candidate shifts
+            // Dla Cezara wymień kandydujące przesunięcia górnymi
             if (action.cipher === 'caesar' && action.analysisData.top) {
                 lines.push('  Najlepsze dopasowania (chi² - niższe lepsze):');
                 action.analysisData.top.forEach(t => {
@@ -53,7 +53,7 @@
                 });
                 lines.push('');
             }
-            // For Vigenere, include Kasiski / IC / candidate keys if available
+            // Dla Vigenère'a, dołącz Kasiski / IC / kandydujące klucze, jeśli dostępne
             if (action.cipher === 'vigenere' && action.analysisData) {
                 const ad = action.analysisData;
                 if (ad.kasiski) {
@@ -94,7 +94,7 @@
         return lines.join('\n');
     }
 
-    // Format visualization steps into readable text
+    // Sformatuj kroki wizualizacji na czytelny tekst
     function formatVisualizationSteps(steps) {
         if (!Array.isArray(steps) || steps.length === 0) {
             return '  (Brak wizualizacji / operacja nie została uruchomiona)';
@@ -125,7 +125,7 @@
         return rows.join('\n');
     }
 
-    // File helpers
+    // Funkcje pomocnicze pliku
     function downloadTxt(filename, content) {
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -173,7 +173,7 @@
         buttonEl.classList.remove('loading');
     }
 
-    // UI bindings
+    // Powiązania interfejsu użytkownika
     const exportTxtBtn = document.getElementById('export-txt');
     const exportPdfBtn = document.getElementById('export-pdf');
 
@@ -257,8 +257,8 @@
                     settingsDiv.innerHTML = `<h4>Ustawienia szyfru</h4><pre style="background:#f5f5f5;padding:8px;border-radius:6px;border:1px solid #eee;white-space:pre-wrap;">${escapeHtml(JSON.stringify(action.settings || {}, null, 2))}</pre>`;
                     exportEl.appendChild(settingsDiv);
 
-                    // If available, prefer a full multi-step HTML render produced by script.js
-                                    // Build full multi-step HTML directly from action.visualization (safer & includes all steps)
+                    // Jeśli dostępne, wolę pełne wieloetapowe renderowanie HTML wyprodukowane przez script.js
+                                    // Zbuduj pełny wieloetapowy HTML bezpośrednio z action.visualization (bezpieczniejszy i zawiera wszystkie kroki)
                                     const vizHtml = buildVisualizationHTMLForExport(action);
                                     const wrapper = document.createElement('div');
                                     wrapper.innerHTML = vizHtml;
@@ -268,7 +268,7 @@
                                     wrapper.style.borderRadius = '8px';
                                     exportEl.appendChild(wrapper);
 
-                                    // If user ran frequency analysis during session, include the analysis HTML (only when analysis was executed)
+                                    // Jeśli użytkownik uruchomił analizę częstości podczas sesji, dołącz HTML analizy (tylko gdy analiza została wykonana)
                                     if (action.analysisClicked && action.analysisHtml) {
                                         const analysisWrapper = document.createElement('div');
                                         analysisWrapper.style.marginTop = '12px';
@@ -312,7 +312,7 @@
         });
     }
 
-    // Build full HTML for visualization steps from action.visualization
+    // Zbuduj pełny HTML dla kroków wizualizacji z action.visualization
     function buildVisualizationHTMLForExport(action) {
         if (!action || !Array.isArray(action.visualization) || action.visualization.length === 0) {
             return `<div style="font-style:italic;color:#666;padding:8px;background:#fafafa;border-radius:6px;border:1px dashed #eee;">Brak wizualizacji krok po kroku (uruchom operację szyfrowania/odszyfrowywania).</div>`;
@@ -321,7 +321,7 @@
         const stepsHtml = action.visualization.map((s, idx) => {
             const stepNum = idx + 1;
 
-            // Caesar / Vigenere style (original -> transformed)
+            // Styl Cezara / Vigenère'a (oryginał -> przekształcony)
             if (s.original !== undefined && s.transformed !== undefined) {
                 const shiftText = s.shift !== undefined ? `<div style="font-size:0.9rem;color:#666;margin-bottom:6px;">Przesunięcie: ${escapeHtml(String(s.shift))}</div>` : '';
                 const positions = `Pozycja: ${escapeHtml(String(s.originalIndex ?? '-'))} → ${escapeHtml(String(s.newIndex ?? '-'))}`;
@@ -340,7 +340,7 @@
                     </div>`;
             }
 
-            // Enigma / path-based steps
+            // Enigma / kroki oparte na ścieżkach
             if ((s.inputChar !== undefined && s.outputChar !== undefined) || Array.isArray(s.path)) {
                 const positions = Array.isArray(s.positions) ? s.positions.join(' • ') : (s.positions ? String(s.positions) : '-');
                 const pathText = Array.isArray(s.path) ? s.path.map(p => escapeHtml(`${p.stage}:${p.input}->${p.output ?? p.outputChar ?? '-'}`)).join(' | ') : '';
@@ -358,7 +358,7 @@
                     </div>`;
             }
 
-            // Railfence visual (fence matrix representation)
+            // Wizualizacja szyny przesuwnej (reprezentacja macierzy ogrodzenia)
             if (s.fence !== undefined) {
                 const rows = Array.isArray(s.fence) ? s.fence.map((r,i)=>`<div style="font-family:monospace">Rząd ${i+1}: ${escapeHtml(r.join(''))}</div>`).join('') : '';
                 return `
