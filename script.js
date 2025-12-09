@@ -593,7 +593,7 @@ function rotorPosToLetter(pos) {
 function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPositions = [0,0,0], isEncrypt = true) {
     // Podążaj za tym samym przepływem co enigmaEncrypt aby wizualizacja zgadzała się z wyjściem algorytmu
     spaState.visualizationSteps = [];
-    let positions = [...initialPositions]; // right, middle, left
+    let positions = [...initialPositions]; // prawy, środkowy, lewy
     const rings = [...ringPositions];
     const cleanInput = input.toUpperCase().replace(/[^A-Z]/g, '');
     const rotorDisplayNames = ['Rotor 3', 'Rotor 2', 'Rotor 1'];
@@ -612,7 +612,7 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
         const plugIn = PLUGBOARD[ch] || ch;
         let signal = toNum(plugIn);
 
-        // If plugboard changed letter on entry, show plugboard step first
+        // Jeśli nastąpiła zmiana przez plugboard, zanotuj to w ścieżce
         if (plugIn !== ch) {
             path.push({ stage: 'Plugboard (in)', input: ch, output: plugIn, pos: null, plugPair: [ch, plugIn] });
         }
@@ -636,7 +636,7 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
             signal = backward(signal, rotorWiring[r], positions[r], rings[r]);
             path.push({ stage: `${rotorDisplayNames[r]} (tył)`, input: toChar(beforeSignal), output: toChar(signal), pos: positions[r], rotorSlot: r });
         }
-        // plugboard output
+        // podstawienie przez plugboard przy wyjściu
         let outBeforePlug = toChar(signal);
         let out = PLUGBOARD[outBeforePlug] || outBeforePlug;
 
@@ -646,7 +646,7 @@ function generateEnigmaVisualizationSteps(input, order, initialPositions, ringPo
 
         path.push({ stage: 'Wyjście', input: outBeforePlug, output: out, pos: null });
 
-        // include snapshot of current plugboard pairs (unique pairs)
+        // Zrób snapshot aktualnych par wtyczkowych (unikalne pary)
         const pairs = [];
         const seen = new Set();
         for (let a in PLUGBOARD) {
@@ -699,7 +699,7 @@ function renderEnigmaVisualizationStep(step) {
         
         const activeLetters = getActiveLettersForRotor(cfg.slot);
         
-        // Określ notch dla tego rotora (cfg.slot odpowiada indeksowi w NOTCHES)
+        // Określ kabr dla tego rotora (cfg.slot odpowiada indeksowi w NOTCHES)
         const notchPosition = NOTCHES[cfg.slot];
         const notchLetter = ALPHABET[notchPosition];
 
@@ -869,9 +869,9 @@ const ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const UKW_B = "YRUHQSLDPXNGOKMIEBFZCWVJAT";
 
 // Rotory I, II, III
-const ROTOR_I   = "EKMFLGDQVZNTOWYHXUSPAIBRCJ";  // notch Q = 16
-const ROTOR_II  = "AJDKSIRUXBLHWTMCQGZNPYFVOE";  // notch E = 4
-const ROTOR_III = "BDFHJLCPRTXVZNYEIWGAKMUSQO";  // notch V = 21
+const ROTOR_I   = "EKMFLGDQVZNTOWYHXUSPAIBRCJ";  // Kabr Q = 16
+const ROTOR_II  = "AJDKSIRUXBLHWTMCQGZNPYFVOE";  // Kabr E = 4
+const ROTOR_III = "BDFHJLCPRTXVZNYEIWGAKMUSQO";  // Kabr V = 21
 
 const ROTORS = [ROTOR_I, ROTOR_II, ROTOR_III];
 const NOTCHES = [16, 4, 21];  // 0=A //KABRY
@@ -930,12 +930,12 @@ window.updatePlugboardList = function() {
 // TYDZIEŃ 6: IMPLEMENTACJA ENIGMY
 // =====================================================
     
-    // --- BASIC ---
+    // --- PODSTAWOWE ---
     const A = 'A'.charCodeAt(0);
     const toNum  = c => c.charCodeAt(0) - A;
     const toChar = n => String.fromCharCode(A + ((n % 26 + 26) % 26));
     
-    // --- PASS THROUGH ROTOR ---
+    // --- PRZEJŚCIE PRZEZ ROTOR ---
      
     function forward(signal, wiring, pos, ring) {
         // offset uwzględnia pozycję + ringstellung
@@ -956,25 +956,24 @@ window.updatePlugboardList = function() {
         return (idx - offset + 26) % 26;
     }
 
-    
-    // --- CORRECT DOUBLE-STEPPING ---
+    // --- POPRAWNE PODWÓJNE KROKOWANIE ---
     function step(pos, notches) {
-        const [r, m, l] = pos;         // right / middle / left
+        const [r, m, l] = pos;         // prawy / środkowy / lewy
         
         const rightAtNotch  = (r === notches[0]);
         const middleAtNotch = (m === notches[1]);
         
-        // middle notch → middle + left step
+        // Środkowy kabr -> środkowy + lewy krok
         if (middleAtNotch) {
             pos[1] = (m + 1) % 26;
             pos[2] = (l + 1) % 26;
         } 
-        // right notch → middle step
+        // Prawy kabr -> środkowy krok
         else if (rightAtNotch) {
             pos[1] = (m + 1) % 26;
         }
         
-        // right rotor always steps
+        // Prawy rotor zawsze się obraca
         pos[0] = (r + 1) % 26;
     }
     
@@ -1262,7 +1261,7 @@ window.updatePlugboardList = function() {
                 const originalLabel = step.isEncryption ? 'Oryginalny' : 'Zaszyfrowany';
                 const transformedLabel = step.isEncryption ? 'Zaszyfrowany' : 'Odszyfrowany';
                 
-                // Render the classic inline Caesar visualization used by the app
+                // Renderuj zawartość wizualizacji Cezara
                 vizArea.innerHTML = `
                     <div class="viz-step-content">
                         <div class="step-header">
@@ -1301,7 +1300,7 @@ window.updatePlugboardList = function() {
         }
     }
 
-    // Return HTML string for a single Caesar visualization step (reusable for export)
+    // Zwróć ciąg HTML dla pojedynczego kroku wizualizacji Cezara (użyteczne do eksportu)
     function renderCaesarVisualizationStep(step) {
         // Formatowanie przesunięcia dla wyświetlenia
         const shiftAbs = Math.abs(step.shift);
@@ -1353,11 +1352,11 @@ window.updatePlugboardList = function() {
     function renderFullVisualizationHTML(action) {
         if (!action || !Array.isArray(action.visualization)) return '';
 
-        // Preserve original global currentCipher and restore afterwards
+        // Zachowaj oryginalny globalny currentCipher i przywróć go po zakończeniu
         const prevCipher = currentCipher;
-        currentCipher = action.cipher; // ensure renderVisualizationStep picks the correct rendering branch
+        currentCipher = action.cipher; // upewnij się, że renderVisualizationStep wybiera odpowiednią gałąź renderowania
 
-        // Build a wrapper that groups all steps and step headers
+        // Tworzenie zawartości HTML dla wszystkich kroków wizualizacji
         const content = action.visualization.map((step, i) => {
             try {
                 let html = '';
@@ -1378,7 +1377,7 @@ window.updatePlugboardList = function() {
                         html = `<pre style="background:#fafafa;padding:8px;border:1px solid #eee;border-radius:6px;">${escapeHtml(JSON.stringify(step, null, 2))}</pre>`;
                 }
 
-                // if the renderer returned falsy, fallback to textual form
+                // Jeśli żadna funkcja renderująca nie była dostępna, pokaż surowe dane
                 if (!html) html = `<pre style="background:#fafafa;padding:8px;border:1px solid #eee;border-radius:6px;">${escapeHtml(JSON.stringify(step, null, 2))}</pre>`;
 
                 return `<div class="export-viz-step" style="margin-bottom:18px;">${html}</div>`;
@@ -1391,7 +1390,7 @@ window.updatePlugboardList = function() {
         return content;
     }
 
-    // Expose renderer for export.js
+    // Renderuj funkcję do globalnego użytku
     window.renderFullVisualizationHTML = renderFullVisualizationHTML;
     
     function renderAlphabetWithHighlights(step) {
@@ -1718,7 +1717,7 @@ window.updatePlugboardList = function() {
         });
     }
 
-    // expose to other files (export.js may call this)
+    // przekazanie funkcji na zewnątrz do użycia w innych modułach
     window.showNotification = showNotification;
 
     function _processNotificationQueue() {
@@ -2489,10 +2488,10 @@ function letterToRotorPos(letter) {
     const rotorWiring = rotorOrder.map(i => ROTORS[i]);
     const notches     = rotorOrder.map(i => NOTCHES[i]);
 
-    // Grundstellung – start positions
+    // Grundstellung – pozycje startowe
     const pos  = grundstellung.map(c => toNum(c));        
 
-    // Ringstellung – ring offsets
+    // Ringstellung – offsety pierścieni
     const ring = ringstellung.map(c => toNum(c));        
 
     let out = "";
@@ -2784,7 +2783,7 @@ function letterToRotorPos(letter) {
                 }
             }
 
-            // Clear plugboard button may or may not exist in the DOM; guard safely
+            // Wyczyść listę kabli przy przełączaniu szyfru
             const clearPlugBtn = document.getElementById("clearPlugboard");
             if (clearPlugBtn) {
                 clearPlugBtn.addEventListener('click', () => {
@@ -2822,7 +2821,7 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla szyfrowania
             generateVisualizationSteps(input, shiftValue, true);
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'encrypt',
                 cipher: 'caesar',
@@ -2857,7 +2856,7 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla Vigenère
             generateVigenereVisualizationSteps(input, keyword, true);
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'encrypt',
                 cipher: 'vigenere',
@@ -2889,7 +2888,7 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla szyfru płotowego (uwzględnia offset)
             generateRailFenceVisualizationSteps(input, railsValue, offsetValue, true);
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'encrypt',
                 cipher: 'railfence',
@@ -2900,7 +2899,7 @@ function letterToRotorPos(letter) {
                 timestamp: new Date().toISOString()
             });
             showFrequencyUI(false);
-            // for other ciphers, frequency analysis not offered
+            // dla innych szyfrów niż Cezar/Vigenere nie pokazujemy analizy częstości
             showFrequencyUI(false);
             
             showNotification('Tekst zaszyfrowany szyfrem płotowym! Spacje zostały usunięte.', 'success');
@@ -2913,21 +2912,21 @@ function letterToRotorPos(letter) {
             // // Algorytm:    R M L
              
             const order = [
-                parseInt(document.getElementById('order2').value), // RIGHT
-                parseInt(document.getElementById('order1').value), // MIDDLE
-                parseInt(document.getElementById('order0').value)  // LEFT
+                parseInt(document.getElementById('order2').value), // PRAWY
+                parseInt(document.getElementById('order1').value), // ŚRODKOWY
+                parseInt(document.getElementById('order0').value)  // LEWY
             ];
             
             const grundstellung = [
-                document.getElementById('g2').value, // RIGHT
-                document.getElementById('g1').value, // MIDDLE
-                document.getElementById('g0').value  // LEFT
+                document.getElementById('g2').value, // PRAWY
+                document.getElementById('g1').value, // ŚRODKOWY
+                document.getElementById('g0').value  // LEWY
             ];
             
             const ringstellung = [
-                document.getElementById('r2').value, // RIGHT
-                document.getElementById('r1').value, // MIDDLE
-                document.getElementById('r0').value  // LEFT
+                document.getElementById('r2').value, // PRAWY
+                document.getElementById('r1').value, // ŚRODKOWY
+                document.getElementById('r0').value  // LEWY
             ];
     
             const result = enigmaEncrypt(
@@ -2943,7 +2942,7 @@ function letterToRotorPos(letter) {
                 const initPos = grundstellung.map(ch => letterToRotorPos(ch));
                 const ringPos = ringstellung.map(ch => letterToRotorPos(ch));
                 generateEnigmaVisualizationSteps(input, order, initPos, ringPos, true);
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'encrypt',
                 cipher: 'enigma',
@@ -2983,7 +2982,7 @@ function letterToRotorPos(letter) {
             
             // Generuj wizualizację dla deszyfrowania (z ujemnym przesunięciem)
             generateVisualizationSteps(input, -shiftValue, false);
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'decrypt',
                 cipher: 'caesar',
@@ -3024,7 +3023,7 @@ function letterToRotorPos(letter) {
             }
             
             showNotification('Tekst odszyfrowany szyfrem Vigenère!', 'success');
-            // Save last action for export (TXT/PDF)
+            // Zapisz ostatnią akcję do eksportu (TXT/PDF)
             setLastAction({
                 type: 'decrypt',
                 cipher: 'vigenere',
@@ -3060,24 +3059,24 @@ function letterToRotorPos(letter) {
         //Enigma
         if (currentCipher === 'enigma') {
 
-    // NOTE: reading controls must be consistent with encryption handler
-    // encryption reads order as [order2, order1, order0] (RIGHT, MIDDLE, LEFT)
+    // UWAGA: odczyt kontrolek musi być zgodny z obsługą szyfrowania
+    // szyfrowanie odczytuje kolejność jako [order2, order1, order0] (PRAWY, ŚRODKOWY, LEWY)
     const order = [
-        parseInt(document.getElementById('order2').value), // RIGHT
-        parseInt(document.getElementById('order1').value), // MIDDLE
-        parseInt(document.getElementById('order0').value)  // LEFT
+        parseInt(document.getElementById('order2').value), // PRAWY
+        parseInt(document.getElementById('order1').value), // ŚRODKOWY
+        parseInt(document.getElementById('order0').value)  // LEWY
     ];
 
     const grundstellung = [
-        document.getElementById('g2').value, // RIGHT
-        document.getElementById('g1').value, // MIDDLE
-        document.getElementById('g0').value  // LEFT
+        document.getElementById('g2').value, // PRAWY
+        document.getElementById('g1').value, // ŚRODKOWY
+        document.getElementById('g0').value  // LEWY
     ];
 
     const ringstellung = [
-        document.getElementById('r2').value, // RIGHT
-        document.getElementById('r1').value, // MIDDLE
-        document.getElementById('r0').value  // LEFT
+        document.getElementById('r2').value, // PRAWY
+        document.getElementById('r1').value, // ŚRODKOWY
+        document.getElementById('r0').value  // LEWY
     ];
 
     const result = enigmaEncrypt(
@@ -3088,7 +3087,7 @@ function letterToRotorPos(letter) {
     );
 
     outputText.textContent = result;
-    // Save last action for export (TXT/PDF) for decryption
+    // Zapisz ostatnią akcję do eksportu (TXT/PDF)
     setLastAction({
         type: 'decrypt',
         cipher: 'enigma',
@@ -3107,8 +3106,8 @@ function letterToRotorPos(letter) {
     }
 }
 
-// --- optional debug helper to check Enigma round-trip (dev/testing) ---
-// Set window.DEBUG_ENIGMA_TEST = true in browser console to run a quick verification
+// --- engima test ---
+// Ustaw window.DEBUG_ENIGMA_TEST = true w konsoli, aby aktywować test
 window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['order2','order1','order0'], grundSelector = ['g2','g1','g0'], ringSelector = ['r2','r1','r0']) {
     try {
         const order = orderSelector.map(id => parseInt(document.getElementById(id).value));
@@ -3145,9 +3144,6 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
         }
     });
 
-    // Export code moved to `export.js` to keep responsibilities separated.
-    // export.js runs after script.js and uses `window.getLastAction()` to fetch the most recent session data.
-
     // === RESET ===
     resetBtn.addEventListener('click', resetAll);
 
@@ -3175,22 +3171,22 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
     
     updateCharCount();
 
-    // Wire documentation links (class=doc-link) to show content from mdPages (md-pages.js)
+    // === OBSŁUGA LINKÓW DO DOKUMENTACJI ===
     document.querySelectorAll('.doc-link').forEach(link => {
         link.addEventListener('click', (ev) => {
             ev.preventDefault();
             const page = link.dataset.page;
             if (!page) return;
 
-            // Make sure docs panel exists
+            // Upewnij się, że elementy panelu dokumentacji istnieją
             if (!docsPanel || !docsContent) return;
 
-            // Prepare content
+            // Przygotuj zawartość dokumentacji
             let md = '';
             let title = link.textContent.trim() || page;
 
             if (page === 'DOCUMENTATION') {
-                // combine README + specified pages
+                // połącz README + określone strony
                 md += (window.mdPages && window.mdPages.README) ? window.mdPages.README + '\n\n---\n\n' : '';
                 const extras = ['Analiza_częstości_i_słabości_klasycznych_szyfrów','Szyfr_Cezara','Szyfr_Vigenère','Szyfr_Płotowy','Uproszczony_model_Enigmy'];
                 extras.forEach(k => {
@@ -3204,7 +3200,7 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
                 md = `Brak zawartości dla: ${page}`;
             }
 
-            // convert markdown to HTML (marked) and sanitize if possible
+            // konwertuj markdown na HTML (marked) i oczyść jeśli to możliwe
             let html = '';
             if (window.marked) html = marked.parse(md);
             else html = '<pre>' + md.replace(/</g,'&lt;') + '</pre>';
@@ -3213,12 +3209,12 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
             docsTitle.textContent = title;
             docsContent.innerHTML = html;
             
-            // Show the docs panel section wrapper
+            // Pokaż panel dokumentacji
             if (docsPanelSection) {
                 docsPanelSection.classList.add('active');
             }
             
-            // Use setTimeout to ensure content is rendered before scrolling
+            // Użyj setTimeout, aby upewnić się, że zawartość jest wyrenderowana przed przewinięciem
             setTimeout(() => {
                 if (docsPanelSection) {
                     docsPanelSection.scrollIntoView({behavior:'smooth', block:'start'});
@@ -3227,9 +3223,20 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
         });
     });
 
-    if (docsClose) docsClose.addEventListener('click', () => {
+    if (docsClose) docsClose.addEventListener('click', (e) => {
+        e.preventDefault();
         if (docsPanelSection) docsPanelSection.classList.remove('active');
         // Przejdź do sekcji start tak jak w quizie
+        // Wymuś scroll do home section
+        const homeSection = document.getElementById('home');
+        if (homeSection) {
+            const navHeight = document.querySelector('.navbar')?.offsetHeight || 0;
+            const targetPosition = homeSection.offsetTop - navHeight - 20;
+            window.scrollTo({ 
+                top: targetPosition,
+                behavior: 'smooth'
+            });
+        }
         window.location.hash = 'home';
     });
 
@@ -3247,7 +3254,7 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
     
     console.log('✨ SPA + Wizualizacja Cezara załadowana!');
 
-    // Developer helper: automatically run enigma round-trip test if flag is set
+    // --- opcjonalny test debugowania Enigmy ---
     if (window.DEBUG_ENIGMA_TEST) {
         try {
             const res = window.enigmaRoundTripTest('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
