@@ -3229,6 +3229,8 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
 
     if (docsClose) docsClose.addEventListener('click', () => {
         if (docsPanelSection) docsPanelSection.classList.remove('active');
+        // Przejdź do sekcji start tak jak w quizie
+        window.location.hash = 'home';
     });
 
     // Aktualizacja licznika znaków również po sanityzacji

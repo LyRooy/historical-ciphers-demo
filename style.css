@@ -74,6 +74,16 @@ body {
     font-weight: bold;
 }
 
+.nav-brand .logo-text {
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: color 0.2s ease;
+}
+
+.nav-brand .logo-text:hover {
+    color: #6f42c1;
+}
+
 .nav-menu {
     list-style: none;
     display: flex;
@@ -1923,7 +1933,13 @@ html {
     border-radius: 6px;
     overflow-x: auto;
     border: 1px solid var(--border-color);
-    transition: border-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Dark mode dla bloków kodu */
+body.dark-mode #docs-content pre {
+    background: #1e1e1e;
+    border-color: #404040;
 }
 
 #docs-content pre code {
