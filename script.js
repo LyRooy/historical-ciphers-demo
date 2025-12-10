@@ -2730,7 +2730,7 @@ function letterToRotorPos(letter) {
                         <select id="g2">${alphabetOptions}</select>
                     </div>
                     
-                <label>Kolejność rotorów(Walzenlage) [Od lewej do prawej]:</label>
+                <label>Kolejność rotorów (Walzenlage) [Od lewej do prawej]:</label>
                     <div class="rotor-order">
                         <select id="order0">
                             <option value="0">I</option>
@@ -3287,4 +3287,5 @@ window.enigmaRoundTripTest = function(text = 'HELLOWORLD', orderSelector = ['ord
  
     
 });
+
 
